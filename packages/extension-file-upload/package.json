@@ -1,6 +1,6 @@
 {
     "name": "@tiptap-codeless/extension-file-upload",
-    "version": "0.0.1",
+    "version": "0.1.1",
     "description": "File upload extension for Tiptap: drag&drop, paste, preview, resize, and pluggable storage",
     "keywords": [
         "tiptap",
@@ -18,7 +18,7 @@
         "url": "https://github.com/namelesserlx/tiptap-codeless",
         "directory": "packages/extension-file-upload"
     },
-    "homepage": "https://github.com/namelesserlx/tiptap-codeless/tree/main/packages/extension-file-upload#readme",
+    "homepage": "https://namelesserlx.github.io/tiptap-codeless/file-upload/",
     "bugs": {
         "url": "https://github.com/namelesserlx/tiptap-codeless/issues"
     },

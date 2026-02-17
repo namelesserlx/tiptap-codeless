@@ -1,6 +1,6 @@
 {
     "name": "@tiptap-codeless/extension-code-block-pro",
-    "version": "0.0.1",
+    "version": "0.1.1",
     "description": "Enhanced code block extension with macOS-style design, syntax highlighting, and more",
     "keywords": [
         "tiptap",
@@ -16,7 +16,7 @@
         "url": "https://github.com/namelesserlx/tiptap-codeless",
         "directory": "packages/extension-code-block-pro"
     },
-    "homepage": "https://github.com/namelesserlx/tiptap-codeless/tree/main/packages/extension-code-block-pro#readme",
+    "homepage": "https://namelesserlx.github.io/tiptap-codeless/code-block-pro/",
     "bugs": {
         "url": "https://github.com/namelesserlx/tiptap-codeless/issues"
     },

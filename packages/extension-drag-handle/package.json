@@ -1,6 +1,6 @@
 {
     "name": "@tiptap-codeless/extension-drag-handle",
-    "version": "0.0.1",
+    "version": "0.1.1",
     "description": "Drag handle extension with insert functionality for Tiptap, similar to Feishu docs",
     "keywords": [
         "tiptap",
@@ -16,7 +16,7 @@
         "url": "https://github.com/namelesserlx/tiptap-codeless",
         "directory": "packages/extension-drag-handle"
     },
-    "homepage": "https://github.com/namelesserlx/tiptap-codeless/tree/main/packages/extension-drag-handle#readme",
+    "homepage": "https://namelesserlx.github.io/tiptap-codeless/drag-handle/",
     "bugs": {
         "url": "https://github.com/namelesserlx/tiptap-codeless/issues"
     },
@@ -26,9 +26,7 @@
         ".": {
             "types": "./dist/index.d.ts",
             "import": "./dist/index.mjs"
-        },
-        "./dist/index.css": "./dist/index.css",
-        "./styles": "./dist/index.css"
+        }
     },
     "files": [
         "dist",

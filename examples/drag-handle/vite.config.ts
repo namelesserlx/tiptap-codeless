@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
     plugins: [react()],
+    base: '/tiptap-codeless/examples/drag-handle/',
     server: {
         port: 5174,
     },

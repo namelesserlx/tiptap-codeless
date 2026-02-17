@@ -1,6 +1,6 @@
 {
     "name": "@tiptap-codeless/core",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "description": "Core utilities and base classes for Tiptap Codeless extensions",
     "keywords": [
         "tiptap",
@@ -15,7 +15,7 @@
         "url": "https://github.com/namelesserlx/tiptap-codeless",
         "directory": "packages/core"
     },
-    "homepage": "https://github.com/namelesserlx/tiptap-codeless/tree/main/packages/core#readme",
+    "homepage": "https://github.com/namelesserlx/tiptap-codeless#readme",
     "bugs": {
         "url": "https://github.com/namelesserlx/tiptap-codeless/issues"
     },
@@ -24,9 +24,9 @@
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
+            "types": "./dist/index.d.ts",
             "import": "./dist/index.mjs",
-            "require": "./dist/index.js",
-            "types": "./dist/index.d.ts"
+            "require": "./dist/index.js"
         }
     },
     "files": [
