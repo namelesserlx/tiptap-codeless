@@ -1,0 +1,59 @@
+{
+    "name": "tiptap-codeless",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "description": "A collection of powerful Tiptap extensions with zero boilerplate",
+    "keywords": [
+        "tiptap",
+        "editor",
+        "extensions",
+        "react",
+        "typescript"
+    ],
+    "author": "namelesserlx (https://github.com/namelesserlx)",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/namelesserlx/tiptap-codeless"
+    },
+    "homepage": "https://github.com/namelesserlx/tiptap-codeless#readme",
+    "bugs": {
+        "url": "https://github.com/namelesserlx/tiptap-codeless/issues"
+    },
+    "engines": {
+        "node": ">=22.12.0",
+        "pnpm": ">=8.0.0"
+    },
+    "scripts": {
+        "dev": "pnpm --filter \"./packages/**\" --parallel dev",
+        "build": "pnpm --filter \"./packages/**\" build",
+        "build:core": "pnpm --filter \"@tiptap-codeless/core\" build",
+        "build:extensions": "pnpm --filter \"./packages/extension-*\" build",
+        "type-check": "pnpm --filter \"./packages/**\" type-check",
+        "lint": "eslint .",
+        "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+        "prepush": "pnpm format && pnpm lint && pnpm type-check && pnpm build",
+        "clean": "pnpm --filter \"./packages/**\" clean",
+        "changeset": "changeset",
+        "version-packages": "changeset version",
+        "release": "pnpm build && changeset publish"
+    },
+    "devDependencies": {
+        "@changesets/cli": "^2.29.8",
+        "@eslint/eslintrc": "^3.3.3",
+        "@eslint/js": "^9.39.1",
+        "@types/node": "^24.10.2",
+        "@typescript-eslint/eslint-plugin": "^8.49.0",
+        "@typescript-eslint/parser": "^8.49.0",
+        "@vitejs/plugin-react": "^4.3.4",
+        "eslint": "^9.39.1",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-react": "^7.37.5",
+        "eslint-plugin-react-hooks": "^7.0.1",
+        "postcss-discard-comments": "^7.0.5",
+        "prettier": "^3.7.4",
+        "typescript": "^5.9.3",
+        "vite": "^7.2.7"
+    }
+}

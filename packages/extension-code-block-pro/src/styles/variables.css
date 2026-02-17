@@ -1,0 +1,95 @@
+/**
+ * Code Block Pro - CSS 变量定义
+ *
+ * 主题切换方式：
+ * 1. .theme-light - 亮色主题
+ * 2. .theme-dark - 暗色主题
+ * 3. .theme-auto - 跟随系统 (prefers-color-scheme)
+ *
+ * 自定义变量：
+ * 用户可以在自己的 CSS 中覆盖任意变量
+ */
+
+/* ============================================
+   亮色主题
+   ============================================ */
+.code-block-pro-wrapper.theme-light,
+.code-block-pro-wrapper.theme-auto {
+    --cbp-bg: #fafafa;
+    --cbp-header-bg: #f0f0f0;
+    --cbp-border: #e0e0e0;
+    --cbp-text: #383a42;
+    --cbp-text-secondary: #6c6f7c;
+    --cbp-text-muted: #a0a1a7;
+    --cbp-accent-color: #4078f2;
+    --cbp-hover-bg: #ebebeb;
+    --cbp-active-bg: #ebebeb;
+    --cbp-dropdown-bg: #f0f0f0;
+    --cbp-line-numbers-bg: #fafafa;
+    --cbp-scrollbar-track: #f0f0f0;
+    --cbp-scrollbar-thumb: #c5c6c9;
+    --cbp-scrollbar-thumb-hover: #a0a1a7;
+    --cbp-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+    /* 圆角 */
+    --cbp-radius-lg: 12px;
+    --cbp-radius-md: 8px;
+    --cbp-radius-sm: 6px;
+    --cbp-radius-xs: 5px;
+}
+
+/* ============================================
+   暗色主题
+   ============================================ */
+.code-block-pro-wrapper.theme-dark {
+    --cbp-bg: #282c34;
+    --cbp-header-bg: #21252b;
+    --cbp-border: #181a1f;
+    --cbp-text: #abb2bf;
+    --cbp-text-secondary: #8a91a0;
+    --cbp-text-muted: #5c6370;
+    --cbp-accent-color: #61afef;
+    --cbp-hover-bg: #2c313c;
+    --cbp-active-bg: #2c313c;
+    --cbp-dropdown-bg: #21252b;
+    --cbp-line-numbers-bg: #282c34;
+    --cbp-scrollbar-track: #21252b;
+    --cbp-scrollbar-thumb: #4b5263;
+    --cbp-scrollbar-thumb-hover: #5c6370;
+    --cbp-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
+
+    /* 圆角 */
+    --cbp-radius-lg: 12px;
+    --cbp-radius-md: 8px;
+    --cbp-radius-sm: 6px;
+    --cbp-radius-xs: 5px;
+}
+
+/* ============================================
+   自动模式 - 暗色 (prefers-color-scheme: dark)
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+    .code-block-pro-wrapper.theme-auto {
+        --cbp-bg: #282c34;
+        --cbp-header-bg: #21252b;
+        --cbp-border: #181a1f;
+        --cbp-text: #abb2bf;
+        --cbp-text-secondary: #8a91a0;
+        --cbp-text-muted: #5c6370;
+        --cbp-accent-color: #61afef;
+        --cbp-hover-bg: #2c313c;
+        --cbp-active-bg: #2c313c;
+        --cbp-dropdown-bg: #21252b;
+        --cbp-line-numbers-bg: #282c34;
+        --cbp-scrollbar-track: #21252b;
+        --cbp-scrollbar-thumb: #4b5263;
+        --cbp-scrollbar-thumb-hover: #5c6370;
+        --cbp-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
+
+        /* 圆角 */
+        --cbp-radius-lg: 12px;
+        --cbp-radius-md: 8px;
+        --cbp-radius-sm: 6px;
+        --cbp-radius-xs: 5px;
+    }
+}

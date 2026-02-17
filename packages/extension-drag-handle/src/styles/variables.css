@@ -1,0 +1,89 @@
+/* ============================================
+   亮色主题（默认）
+   ============================================ */
+:root {
+    /* 拖拽手柄 */
+    --cl-dh-bg: transparent;
+    --cl-dh-hover-bg: #f0efef;
+    --cl-dh-border: #dee0e3;
+    --cl-dh-icon-color: #b5babf;
+    --cl-dh-icon-hover-color: #1890ff;
+    --cl-dh-insert-icon-color: #b5babf;
+    --cl-dh-insert-icon-hover-color: #1890ff;
+
+    /* 插入菜单 */
+    --cl-im-bg: #ffffff;
+    --cl-im-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    --cl-im-border: rgba(0, 0, 0, 0.08);
+    --cl-im-text-color: #333333;
+    --cl-im-icon-color: #666666;
+    --cl-im-shortcut-color: #999999;
+    --cl-im-placeholder-color: #999999;
+    --cl-im-empty-color: #999999;
+    --cl-im-group-title-color: #999999;
+    --cl-im-input-bg: #f5f5f5;
+    --cl-im-input-border: rgba(0, 0, 0, 0.1);
+    --cl-im-input-focus-bg: #ffffff;
+    --cl-im-input-focus-border: #1890ff;
+    --cl-im-item-hover-bg: rgba(24, 144, 255, 0.08);
+    --cl-im-item-active-bg: rgba(24, 144, 255, 0.12);
+
+    /* Tooltip */
+    --tiptap-tooltip-bg: #1f2329;
+    --tiptap-tooltip-text: #ffffff;
+
+    /* 滚动条 */
+    --tiptap-scrollbar-track: #f5f5f5;
+    --tiptap-scrollbar-thumb: #c1c1c1;
+    --tiptap-scrollbar-thumb-hover: #a8a8a8;
+
+    /* ProseMirror 相关 */
+    --tiptap-selected-node-outline: #1890ff;
+    --tiptap-drop-cursor-color: #1890ff;
+}
+
+/* ============================================
+   暗色主题
+   ============================================ */
+:root[data-theme='dark'],
+html.dark,
+.dark {
+    /* 拖拽手柄 */
+    --cl-dh-bg: transparent;
+    --cl-dh-hover-bg: rgba(255, 255, 255, 0.08);
+    --cl-dh-border: #3a3f45;
+    --cl-dh-icon-color: #666666;
+    --cl-dh-icon-hover-color: #999999;
+    --cl-dh-insert-icon-color: #40a9ff;
+    --cl-dh-insert-icon-hover-color: #69c0ff;
+
+    /* 插入菜单 */
+    --cl-im-bg: #1f1f1f;
+    --cl-im-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    --cl-im-border: rgba(255, 255, 255, 0.1);
+    --cl-im-text-color: #e0e0e0;
+    --cl-im-icon-color: #999999;
+    --cl-im-shortcut-color: #666666;
+    --cl-im-placeholder-color: #666666;
+    --cl-im-empty-color: #666666;
+    --cl-im-group-title-color: #888888;
+    --cl-im-input-bg: #2a2a2a;
+    --cl-im-input-border: rgba(255, 255, 255, 0.1);
+    --cl-im-input-focus-bg: #333333;
+    --cl-im-input-focus-border: #40a9ff;
+    --cl-im-item-hover-bg: rgba(64, 169, 255, 0.12);
+    --cl-im-item-active-bg: rgba(64, 169, 255, 0.18);
+
+    /* Tooltip */
+    --tiptap-tooltip-bg: #3a3f45;
+    --tiptap-tooltip-text: #ffffff;
+
+    /* 滚动条 */
+    --tiptap-scrollbar-track: #2a2a2a;
+    --tiptap-scrollbar-thumb: #4a4a4a;
+    --tiptap-scrollbar-thumb-hover: #5a5a5a;
+
+    /* ProseMirror 相关 */
+    --tiptap-selected-node-outline: #40a9ff;
+    --tiptap-drop-cursor-color: #40a9ff;
+}

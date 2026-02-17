@@ -1,0 +1,74 @@
+{
+    "name": "@tiptap-codeless/extension-code-block-pro",
+    "version": "0.0.1",
+    "description": "Enhanced code block extension with macOS-style design, syntax highlighting, and more",
+    "keywords": [
+        "tiptap",
+        "editor",
+        "code-block",
+        "syntax-highlighting",
+        "react"
+    ],
+    "author": "namelesserlx (https://github.com/namelesserlx)",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/namelesserlx/tiptap-codeless",
+        "directory": "packages/extension-code-block-pro"
+    },
+    "homepage": "https://github.com/namelesserlx/tiptap-codeless/tree/main/packages/extension-code-block-pro#readme",
+    "bugs": {
+        "url": "https://github.com/namelesserlx/tiptap-codeless/issues"
+    },
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs"
+        },
+        "./dist/index.css": "./dist/index.css",
+        "./styles": "./dist/index.css"
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "dev": "vite build --watch",
+        "build": "vite build && tsc",
+        "type-check": "tsc --noEmit",
+        "lint": "eslint src",
+        "clean": "rm -rf dist",
+        "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
+    },
+    "dependencies": {
+        "@tiptap-codeless/core": "workspace:*",
+        "@tiptap/core": "^3.13.0",
+        "@tiptap/extension-code-block-lowlight": "^3.13.0",
+        "@tiptap/pm": "^3.13.0",
+        "@tiptap/react": "^3.13.0",
+        "classnames": "^2.5.1",
+        "lowlight": "^3.3.0"
+    },
+    "devDependencies": {
+        "@types/react": "^19.2.7",
+        "@vitejs/plugin-react": "^4.3.4",
+        "mermaid": "^11.12.2",
+        "react": "^19.2.1",
+        "react-dom": "^19.2.1",
+        "typescript": "^5.9.3",
+        "vite": "^7.2.7"
+    },
+    "peerDependencies": {
+        "@tiptap/core": ">=3.0.0",
+        "mermaid": ">=10.0.0",
+        "react": ">=19.0.0",
+        "react-dom": ">=19.0.0"
+    },
+    "peerDependenciesMeta": {
+        "mermaid": {
+            "optional": true
+        }
+    }
+}

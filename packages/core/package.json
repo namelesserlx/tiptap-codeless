@@ -1,0 +1,56 @@
+{
+    "name": "@tiptap-codeless/core",
+    "version": "0.0.1",
+    "description": "Core utilities and base classes for Tiptap Codeless extensions",
+    "keywords": [
+        "tiptap",
+        "editor",
+        "core",
+        "utilities"
+    ],
+    "author": "namelesserlx (https://github.com/namelesserlx)",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/namelesserlx/tiptap-codeless",
+        "directory": "packages/core"
+    },
+    "homepage": "https://github.com/namelesserlx/tiptap-codeless/tree/main/packages/core#readme",
+    "bugs": {
+        "url": "https://github.com/namelesserlx/tiptap-codeless/issues"
+    },
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "dev": "vite build --watch",
+        "build": "vite build && tsc --emitDeclarationOnly --declaration --declarationMap",
+        "type-check": "tsc --noEmit",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@tiptap/core": "^3.13.0",
+        "@tiptap/pm": "^3.13.0"
+    },
+    "devDependencies": {
+        "@types/react": "^19.2.7",
+        "react": "^19.2.1",
+        "typescript": "^5.9.3",
+        "vite": "^7.2.7"
+    },
+    "peerDependencies": {
+        "@tiptap/core": ">=3.0.0",
+        "react": ">=19.0.0"
+    }
+}

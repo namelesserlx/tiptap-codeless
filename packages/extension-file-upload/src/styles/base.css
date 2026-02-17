@@ -1,0 +1,291 @@
+.tiptap-upload-image,
+.tiptap-upload-image *,
+.tiptap-upload-image *::before,
+.tiptap-upload-image *::after,
+.tiptap-upload-video,
+.tiptap-upload-video *,
+.tiptap-upload-video *::before,
+.tiptap-upload-video *::after,
+.tiptap-upload-file,
+.tiptap-upload-file *,
+.tiptap-upload-file *::before,
+.tiptap-upload-file *::after,
+.tiptap-image-bubble-menu-wrapper,
+.tiptap-image-bubble-menu-wrapper *,
+.tiptap-image-bubble-menu-wrapper *::before,
+.tiptap-image-bubble-menu-wrapper *::after {
+    box-sizing: border-box;
+}
+
+.tiptap-upload-image,
+.tiptap-upload-video,
+.tiptap-upload-file {
+    display: block;
+}
+
+.tiptap-upload-image--align-left {
+    text-align: left;
+}
+
+.tiptap-upload-image--align-center {
+    text-align: center;
+}
+
+.tiptap-upload-image--align-right {
+    text-align: right;
+}
+
+.tiptap-upload-image__frame {
+    display: inline-block;
+    position: relative;
+    max-width: 100%;
+}
+
+.tiptap-upload-video__frame {
+    display: inline-block;
+    position: relative;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.tiptap-upload-image__frame--selected,
+.tiptap-upload-video__frame--selected {
+    border-color: var(--cl-fu-frame-selected, #1890ff);
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.12);
+}
+
+.tiptap-upload-image__img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 7px;
+}
+
+.tiptap-upload-video__video {
+    display: block;
+    max-width: 100%;
+    max-height: 400px;
+    height: auto;
+    border-radius: 7px;
+    object-fit: contain;
+}
+
+.tiptap-upload-image__handles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.tiptap-upload-image__handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--cl-fu-frame-selected, #1890ff);
+    border: 2px solid #fff;
+    pointer-events: auto;
+    cursor: nwse-resize;
+    padding: 0;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.1),
+        0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.tiptap-upload-image__handle:hover {
+    transform: scale(1.3);
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.1),
+        0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tiptap-upload-image__handle--nw {
+    top: -5px;
+    left: -5px;
+}
+
+.tiptap-upload-image__handle--ne {
+    top: -5px;
+    right: -5px;
+    cursor: nesw-resize;
+}
+
+.tiptap-upload-image__handle--sw {
+    bottom: -5px;
+    left: -5px;
+    cursor: nesw-resize;
+}
+
+.tiptap-upload-image__handle--se {
+    bottom: -5px;
+    right: -5px;
+}
+
+/* ============================================
+   文件卡片
+   ============================================ */
+
+.tiptap-upload-file {
+    display: block;
+    width: 100%;
+    margin: 8px 0;
+}
+
+.tiptap-upload-file__card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    background: var(--cl-fu-file-bg, #ffffff);
+    border: 1px solid var(--cl-fu-file-border, rgba(0, 0, 0, 0.08));
+    color: var(--cl-fu-file-text, #333333);
+    transition: all 0.2s ease;
+}
+
+.tiptap-upload-file__card:hover {
+    background: var(--cl-fu-file-bg-hover, #f0f2f5);
+}
+
+.tiptap-upload-file__card--selected {
+    border-color: var(--cl-fu-frame-selected, #1890ff);
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.12);
+}
+
+.tiptap-upload-file__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: var(--cl-fu-file-icon-bg, rgba(24, 144, 255, 0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.tiptap-upload-file__icon-inner {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: var(--cl-fu-frame-selected, #1890ff);
+    font-weight: 700;
+}
+
+.tiptap-upload-file__content {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.tiptap-upload-file__name {
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--cl-fu-file-text, #333333);
+}
+
+.tiptap-upload-file__meta {
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--cl-fu-file-subtext, #666666);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tiptap-upload-file__download {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--cl-fu-file-subtext, #666666);
+    cursor: pointer;
+    flex: 0 0 auto;
+    transition: all 0.2s ease;
+}
+
+.tiptap-upload-file__download:hover {
+    background: var(--cl-fu-file-download-hover, rgba(24, 144, 255, 0.1));
+    color: var(--cl-fu-frame-selected, #1890ff);
+}
+
+.tiptap-upload-file__download:active {
+    transform: scale(0.95);
+}
+
+/* ============================================
+   图片气泡菜单
+   ============================================ */
+
+.tiptap-image-bubble-menu-wrapper {
+    pointer-events: none;
+}
+
+.tiptap-image-bubble-menu {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    background: var(--cl-fu-bubble-menu-bg, #ffffff);
+    border: 1px solid var(--cl-fu-bubble-menu-border, rgba(0, 0, 0, 0.12));
+    border-radius: 8px;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(0, 0, 0, 0.05);
+    pointer-events: auto;
+}
+
+.tiptap-image-bubble-menu__button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--cl-fu-bubble-menu-text, #333333);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.tiptap-image-bubble-menu__button:hover {
+    background: var(--cl-fu-bubble-menu-hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+.tiptap-image-bubble-menu__button--active {
+    background: var(--cl-fu-bubble-menu-active-bg, rgba(24, 144, 255, 0.1));
+    color: var(--cl-fu-frame-selected, #1890ff);
+}
+
+.tiptap-image-bubble-menu__button:active {
+    transform: scale(0.95);
+}
+
+.tiptap-image-bubble-menu__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    color: currentColor;
+}
+
+.tiptap-image-bubble-menu__icon svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}

@@ -1,0 +1,36 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+dist
+build
+.turbo
+*.tsbuildinfo
+
+# Logs
+logs
+*.log
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Changesets
+.changeset/*.md
+!.changeset/README.md
+
+# Coverage
+coverage
+
+# Agent skills (markdown rules, not project source)
+.agents
+
+# Misc
+.DS_Store
+
+
+
+
+

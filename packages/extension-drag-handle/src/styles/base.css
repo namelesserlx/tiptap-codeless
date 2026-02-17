@@ -1,0 +1,349 @@
+.tiptap-drag-handle-container,
+.tiptap-drag-handle-container *,
+.tiptap-drag-handle-container *::before,
+.tiptap-drag-handle-container *::after,
+.tiptap-insert-menu,
+.tiptap-insert-menu *,
+.tiptap-insert-menu *::before,
+.tiptap-insert-menu *::after,
+.tiptap-tooltip,
+.tiptap-tooltip *,
+.tiptap-tooltip *::before,
+.tiptap-tooltip *::after {
+    box-sizing: border-box;
+}
+
+.tiptap-drag-handle-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 10;
+}
+
+/* 拖拽手柄 */
+.tiptap-drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: grab;
+    transition: all 0.15s ease;
+    pointer-events: auto;
+    background: var(--cl-dh-bg, transparent);
+    outline: none;
+    border: 1px solid var(--cl-dh-border, #dee0e3);
+}
+
+/* hover 状态完全由 React 的 isHovering 状态控制，避免拖拽后 :hover 伪类卡住 */
+.tiptap-drag-handle--hovering {
+    opacity: 1;
+    background: var(--cl-dh-hover-bg, #f0efef);
+}
+
+/* 图标 */
+.tiptap-drag-handle_icon {
+    color: var(--cl-dh-icon-color, #b5babf);
+    transition: color 0.15s ease;
+}
+
+.tiptap-drag-handle--hovering .tiptap-drag-handle_icon {
+    color: var(--cl-dh-icon-hover-color, #1890ff);
+}
+
+/* 插入模式 */
+.tiptap-drag-handle--insert {
+    cursor: pointer;
+}
+
+.tiptap-drag-handle--insert .tiptap-drag-handle_icon {
+    color: var(--cl-dh-insert-icon-color, #7f9cb6);
+}
+
+.tiptap-drag-handle--insert.tiptap-drag-handle--hovering .tiptap-drag-handle_icon {
+    color: var(--cl-dh-insert-icon-hover-color, #1890ff);
+}
+
+/* 拖拽模式 */
+.tiptap-drag-handle--drag {
+    cursor: grab;
+}
+
+.tiptap-drag-handle--drag:active {
+    cursor: grabbing;
+}
+
+/* 拖拽中状态 */
+.tiptap-drag-handle--dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+/* 锁定状态 */
+.tiptap-drag-handle--locked {
+    pointer-events: none;
+}
+
+/* 插入菜单 */
+.tiptap-insert-menu {
+    min-width: 200px;
+    max-width: 320px;
+    max-height: 400px;
+    background: var(--cl-im-bg, #ffffff);
+    border-radius: 8px;
+    box-shadow: var(--cl-im-shadow, 0 4px 24px rgba(0, 0, 0, 0.12));
+    border: 1px solid var(--cl-im-border, rgba(0, 0, 0, 0.08));
+    overflow: hidden;
+    animation: insertMenuFadeIn 0.15s ease;
+}
+
+@keyframes insertMenuFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 搜索框 */
+.tiptap-insert-menu__search {
+    padding: 8px;
+    border-bottom: 1px solid var(--cl-im-border, rgba(0, 0, 0, 0.08));
+}
+
+.tiptap-insert-menu__search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--cl-im-input-border, rgba(0, 0, 0, 0.1));
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+    background: var(--cl-im-input-bg, #f5f5f5);
+    color: var(--cl-im-text-color, #333333);
+    transition: all 0.15s ease;
+}
+
+.tiptap-insert-menu__search-input:focus {
+    border-color: var(--cl-im-input-focus-border, #1890ff);
+    background: var(--cl-im-input-focus-bg, #ffffff);
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+.tiptap-insert-menu__search-input::placeholder {
+    color: var(--cl-im-placeholder-color, #999999);
+}
+
+/* 菜单列表 */
+.tiptap-insert-menu__list {
+    padding: 4px;
+    max-height: 320px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--tiptap-scrollbar-thumb, #c1c1c1) var(--tiptap-scrollbar-track, #f5f5f5);
+}
+
+/* Webkit 滚动条样式 */
+.tiptap-insert-menu__list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tiptap-insert-menu__list::-webkit-scrollbar-track {
+    background: var(--tiptap-scrollbar-track, #f5f5f5);
+    border-radius: 3px;
+}
+
+.tiptap-insert-menu__list::-webkit-scrollbar-thumb {
+    background: var(--tiptap-scrollbar-thumb, #c1c1c1);
+    border-radius: 3px;
+}
+
+.tiptap-insert-menu__list::-webkit-scrollbar-thumb:hover {
+    background: var(--tiptap-scrollbar-thumb-hover, #a8a8a8);
+}
+
+/* 菜单项 */
+.tiptap-insert-menu__item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    text-align: left;
+    font-size: 14px;
+    color: var(--cl-im-text-color, #333333);
+    gap: 10px;
+}
+
+.tiptap-insert-menu__item:hover,
+.tiptap-insert-menu__item--active {
+    background: var(--cl-im-item-hover-bg, rgba(24, 144, 255, 0.08));
+}
+
+.tiptap-insert-menu__item--active {
+    background: var(--cl-im-item-active-bg, rgba(24, 144, 255, 0.12));
+}
+
+/* 菜单项图标 */
+.tiptap-insert-menu__item-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: var(--cl-im-icon-color, #666666);
+    flex-shrink: 0;
+}
+
+/* 菜单项标签 */
+.tiptap-insert-menu__item-label {
+    flex: 1;
+    font-weight: 500;
+}
+
+/* 菜单项快捷键 */
+.tiptap-insert-menu__item-shortcut {
+    font-size: 12px;
+    color: var(--cl-im-shortcut-color, #999999);
+    font-family: monospace;
+    display: none;
+}
+
+/* 空状态 */
+.tiptap-insert-menu__empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--cl-im-empty-color, #999999);
+    font-size: 14px;
+}
+
+/* 菜单分组 */
+.tiptap-insert-menu__group {
+    margin-bottom: 8px;
+}
+
+.tiptap-insert-menu__group:last-child {
+    margin-bottom: 0;
+}
+
+.tiptap-insert-menu__group-title {
+    padding: 8px 12px 4px;
+    font-size: 12px;
+    color: var(--cl-im-group-title-color, #999999);
+    font-weight: 500;
+}
+
+.tiptap-insert-menu__group-list {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 基础分组 - 网格布局 */
+.tiptap-insert-menu__group--basic .tiptap-insert-menu__group-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    padding: 0 8px;
+}
+
+.tiptap-insert-menu__group--basic .tiptap-insert-menu__item {
+    flex-direction: column;
+    justify-content: center;
+    padding: 4px;
+    gap: 0;
+    text-align: center;
+    height: 40px;
+}
+
+.tiptap-insert-menu__group--basic .tiptap-insert-menu__item-label {
+    display: none;
+}
+
+.tiptap-insert-menu__group--basic .tiptap-insert-menu__item-shortcut {
+    display: none;
+}
+
+/* Tooltip */
+.tiptap-tooltip {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.tiptap-tooltip-content {
+    padding: 6px 10px;
+    background: var(--tiptap-tooltip-bg, #1f2329);
+    color: var(--tiptap-tooltip-text, #ffffff);
+    font-size: 12px;
+    line-height: 1.4;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    animation: tooltipFadeIn 0.2s ease;
+}
+
+.tiptap-tooltip-content::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -4px;
+    border-width: 4px;
+    border-style: solid;
+    border-color: var(--tiptap-tooltip-bg, #1f2329) transparent transparent transparent;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -100%) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -100%) scale(1);
+    }
+}
+
+/* ProseMirror 选中节点样式 */
+/* 排除图片节点，因为图片节点有自己的选中样式 */
+.ProseMirror-selectednode:not(.node-uploadImage):not(.node-uploadVideo):not(.node-uploadFileCard) {
+    outline: 2px solid var(--tiptap-selected-node-outline, #1890ff);
+    outline-offset: 2px;
+}
+
+/* 拖拽时被选中节点的透明度 - 使拖拽预览更透明 */
+/* 只有在真正拖拽时才应用透明度，而不是选中时 */
+.ProseMirror.dragging .ProseMirror-selectednode {
+    opacity: 0.3;
+}
+
+/* 拖拽放置指示线 */
+.ProseMirror-gapcursor {
+    position: relative;
+}
+
+.ProseMirror-gapcursor::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--tiptap-drop-cursor-color, #1890ff);
+}
+
+/* 拖拽时的放置位置指示 */
+.ProseMirror .drop-cursor {
+    background-color: var(--tiptap-drop-cursor-color, #1890ff) !important;
+    height: 2px !important;
+}

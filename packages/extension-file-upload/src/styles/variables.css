@@ -1,0 +1,37 @@
+/* ============================================
+   亮色主题（默认）
+   ============================================ */
+:root {
+    /* 上传框架 */
+    --cl-fu-frame-border: #0000001f;
+    --cl-fu-frame-selected: #1890ff;
+
+    /* 文件卡片 */
+    --cl-fu-file-bg: #ffffff;
+    --cl-fu-file-bg-hover: #f0f2f5;
+    --cl-fu-file-border: #00000014;
+    --cl-fu-file-text: #333333;
+    --cl-fu-file-subtext: #666666;
+    --cl-fu-file-icon-bg: #1890ff1a;
+    --cl-fu-file-download-hover: #1890ff1a;
+}
+
+/* ============================================
+   暗色主题
+   ============================================ */
+:root[data-theme='dark'],
+html.dark,
+.dark {
+    /* 上传框架 */
+    --cl-fu-frame-border: #ffffff2e;
+    --cl-fu-frame-selected: #1890ff;
+
+    /* 文件卡片 */
+    --cl-fu-file-bg: #ffffff0f;
+    --cl-fu-file-bg-hover: #ffffff1a;
+    --cl-fu-file-border: #ffffff1f;
+    --cl-fu-file-text: #ffffffe6;
+    --cl-fu-file-subtext: #ffffff99;
+    --cl-fu-file-icon-bg: #1890ff26;
+    --cl-fu-file-download-hover: #1890ff33;
+}
