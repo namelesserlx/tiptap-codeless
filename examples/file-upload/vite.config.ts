@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
     plugins: [react()],
-    base: '/tiptap-codeless/examples/file-upload/',
+    base: '/tiptap-codeless/file-upload/',
     server: {
         port: 5174,
     },
