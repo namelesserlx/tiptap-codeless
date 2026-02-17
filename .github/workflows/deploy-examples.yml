@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'examples/**'
+      - 'packages/**'
       - '.github/workflows/deploy-examples.yml'
   workflow_dispatch:
 
@@ -42,11 +43,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build packages
+        run: pnpm build
+
       - name: Build examples
         run: |
           cd examples/drag-handle && pnpm build
           cd ../file-upload && pnpm build
           cd ../code-block-pro && pnpm build
+
+      - name: Verify build outputs
+        run: |
+          if [ ! -d "examples/drag-handle/dist" ]; then
+            echo "Error: drag-handle/dist not found"
+            exit 1
+          fi
+          if [ ! -d "examples/file-upload/dist" ]; then
+            echo "Error: file-upload/dist not found"
+            exit 1
+          fi
+          if [ ! -d "examples/code-block-pro/dist" ]; then
+            echo "Error: code-block-pro/dist not found"
+            exit 1
+          fi
+          echo "All build outputs verified"
 
       - name: Prepare deployment
         run: |
@@ -54,6 +74,8 @@ jobs:
           cp -r examples/drag-handle/dist deploy/drag-handle
           cp -r examples/file-upload/dist deploy/file-upload
           cp -r examples/code-block-pro/dist deploy/code-block-pro
+          echo "Deployment structure:"
+          ls -la deploy/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
