@@ -6,6 +6,11 @@ type AlignType = 'left' | 'center' | 'right';
 export interface ImageBubbleMenuProps {
     align: AlignType | null;
     onAlignChange: (align: AlignType) => void;
+    labels?: {
+        alignLeft?: string;
+        alignCenter?: string;
+        alignRight?: string;
+    };
 }
 
 const AlignLeftIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -26,15 +31,15 @@ const AlignRightIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     </svg>
 );
 
-export const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({ align, onAlignChange }) => {
+export const ImageBubbleMenu: React.FC<ImageBubbleMenuProps> = ({ align, onAlignChange, labels }) => {
     const alignments: {
         value: AlignType;
         icon: React.FC<React.SVGProps<SVGSVGElement>>;
         label: string;
     }[] = [
-        { value: 'left', icon: AlignLeftIcon, label: '左对齐' },
-        { value: 'center', icon: AlignCenterIcon, label: '居中' },
-        { value: 'right', icon: AlignRightIcon, label: '右对齐' },
+        { value: 'left', icon: AlignLeftIcon, label: labels?.alignLeft ?? '左对齐' },
+        { value: 'center', icon: AlignCenterIcon, label: labels?.alignCenter ?? '居中' },
+        { value: 'right', icon: AlignRightIcon, label: labels?.alignRight ?? '右对齐' },
     ];
 
     return (

@@ -1,13 +1,16 @@
 {
     "name": "@tiptap-codeless/extension-code-block-pro",
     "version": "0.1.1",
-    "description": "Enhanced code block extension with macOS-style design, syntax highlighting, and more",
+    "description": "Advanced Tiptap code block extension with syntax highlighting, Mermaid diagrams, fullscreen mode, and built-in i18n",
     "keywords": [
         "tiptap",
         "editor",
         "code-block",
         "syntax-highlighting",
-        "react"
+        "react",
+        "mermaid",
+        "lowlight",
+        "i18n"
     ],
     "author": "namelesserlx (https://github.com/namelesserlx)",
     "license": "MIT",
@@ -36,9 +39,9 @@
     ],
     "scripts": {
         "dev": "vite build --watch",
-        "build": "vite build && tsc",
+        "build": "rm -rf dist && vite build && node ../../scripts/bundle-dts.mjs --project tsconfig.json --entry src/index.ts --output dist/index.d.ts --external-import @tiptap-codeless/core",
         "type-check": "tsc --noEmit",
-        "lint": "eslint src",
+        "lint": "eslint src test",
         "clean": "rm -rf dist",
         "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
     },

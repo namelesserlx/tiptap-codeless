@@ -3,7 +3,7 @@
 Tiptap 拖拽手柄扩展：支持拖拽排序块、插入菜单。
 
 - [English](README.md)
-- [中文](README.zh.md) (当前)
+- [中文](docs.zh-CN.md) (当前)
 
 ---
 

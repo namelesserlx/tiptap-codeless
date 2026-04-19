@@ -23,7 +23,8 @@ export type InsertMenuProps = Record<string, never>;
  */
 export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
     const { editor, pluginState } = useDragHandleContext();
-    const { visible, triggerRect, items, positionConfig, closeMenu } = useInsertMenuContext();
+    const { visible, triggerRect, items, positionConfig, zIndex, emptyLabel, closeMenu } =
+        useInsertMenuContext();
 
     const nodeInfo = pluginState.currentNode;
     const commandRange = pluginState.insertMenuCommandRange ?? null;
@@ -151,7 +152,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
                 position: 'fixed',
                 left: `${position.x}px`,
                 top: `${position.y}px`,
-                zIndex: 1000,
+                zIndex,
             }}
         >
             <div className="tiptap-insert-menu__list">
@@ -207,7 +208,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
                         );
                     })
                 ) : (
-                    <div className="tiptap-insert-menu__empty">无匹配结果</div>
+                    <div className="tiptap-insert-menu__empty">{emptyLabel}</div>
                 )}
             </div>
         </div>,

@@ -73,9 +73,11 @@ function App() {
                 class: 'tiptap-drop-cursor',
             }),
             FileUpload.configure({
+                locale: 'zh-CN',
                 // 默认使用 objectURL（可通过 options.upload 自定义上传到 OSS 等）
             }),
             DragHandle.configure({
+                locale: 'zh-CN',
                 insertMenu: {
                     enabled: true,
                     triggerOnInput: true,
@@ -86,9 +88,15 @@ function App() {
                     itemsMode: 'merge',
                     items: insertMenuItems,
                 },
+                ui: {
+                    menu: {
+                        zIndex: 2400,
+                    },
+                },
             }),
             CodeBlockPro.configure({
                 lowlight,
+                locale: 'zh-CN',
                 defaultLanguage: 'javascript',
                 theme: theme,
                 // macosControls: {
@@ -115,6 +123,11 @@ function App() {
                     enabled: true, // 启用延迟渲染
                     rootMargin: '100px', // 提前 100px 开始渲染
                     placeholderHeight: 120, // 占位符高度
+                },
+                ui: {
+                    languageDropdown: {
+                        zIndex: 2400,
+                    },
                 },
             }),
             Placeholder.configure({

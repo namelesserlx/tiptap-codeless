@@ -3,7 +3,7 @@
 增强版代码块扩展，为 Tiptap 提供 macOS 风格外观、语法高亮、Mermaid 图表和丰富的编辑体验。
 
 - [English](README.md)
-- [中文](README.zh.md) (当前)
+- [中文](docs.zh-CN.md) (当前)
 
 ---
 

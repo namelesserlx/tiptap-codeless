@@ -15,6 +15,10 @@
     max-width: 100%;
 }
 
+.code-block-pro-wrapper.is-language-dropdown-open {
+    z-index: 30;
+}
+
 .code-block-pro-wrapper.is-selected {
     outline: 2px solid var(--cbp-accent-color);
     outline-offset: 3px;

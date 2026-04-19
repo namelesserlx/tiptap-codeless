@@ -37,7 +37,7 @@ export interface ExtensionViteConfigOptions {
 }
 
 /**
- * 扩展包统一的 Vite 配置：ESM、external 依赖、CSS 去注释以减小体积、sourcemap。
+ * 扩展包统一的 Vite 配置：ESM、external 依赖、CSS 去注释与最小化产物。
  * 各 extension 包在 vite.config.ts 中调用并传入包名、entry、可选 extra external 与 alias。
  */
 export function createExtensionViteConfig(options: ExtensionViteConfigOptions): UserConfig {
@@ -69,8 +69,8 @@ export function createExtensionViteConfig(options: ExtensionViteConfigOptions): 
                 },
             },
             cssCodeSplit: true,
-            sourcemap: true,
-            minify: false,
+            sourcemap: false,
+            minify: 'esbuild',
             esbuild: {
                 drop: ['console', 'debugger'],
             },

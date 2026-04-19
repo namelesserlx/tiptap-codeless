@@ -3,7 +3,9 @@
 Enhanced code block extension for Tiptap with macOS-style chrome, syntax highlighting, Mermaid diagrams, and rich UX.
 
 - [English](README.md) (Current)
-- [中文](README.zh.md)
+- [中文](https://github.com/namelesserlx/tiptap-codeless/blob/main/packages/extension-code-block-pro/docs.zh-CN.md)
+- [繁體中文](../../README.zh-TW.md)
+- [日本語](../../README.ja.md)
 
 ---
 
@@ -63,6 +65,7 @@ const editor = useEditor({
         }),
         CodeBlockPro.configure({
             lowlight,
+            locale: 'en',
             defaultLanguage: 'javascript',
             theme: 'auto', // 'light' | 'dark' | 'auto'
         }),
@@ -121,8 +124,28 @@ sequenceDiagram
 
 ## ⚙️ Configuration Options
 
+### Shared i18n options
+
+```ts
+CodeBlockPro.configure({
+    locale: 'ja',
+    messages: {
+        toolbar: {
+            copyCode: 'コードをコピー',
+        },
+    },
+    ui: {
+        languageDropdown: {
+            zIndex: 2400,
+        },
+    },
+});
+```
+
 | Option                          | Type                          | Default                                                                             | Description                                                               |
 | ------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `locale`                        | `'zh-CN' \| 'zh-TW' \| 'en' \| 'ja'` | `'zh-CN'`                                                                     | Built-in UI locale                                                        |
+| `messages`                      | `DeepPartial<CodeBlockProMessages>` | `{}`                                                                           | Override built-in labels                                                  |
 | `lowlight`                      | `Lowlight`                    | `undefined`                                                                         | Lowlight instance for syntax highlighting                                 |
 | `languages`                     | `LanguageConfig[]`            | `defaultLanguages`                                                                  | Available languages in the language selector                              |
 | `defaultLanguage`               | `string \| null`              | `null`                                                                              | Default language for new code blocks                                      |
@@ -151,6 +174,7 @@ sequenceDiagram
 | `lazyRender.placeholderHeight`  | `number`                      | `100`                                                                               | Placeholder height (px) before content is rendered                        |
 | `className`                     | `string`                      | `undefined`                                                                         | Custom CSS class name                                                     |
 | `HTMLAttributes`                | `Record<string, any>`         | `{ class: 'code-block-pro' }`                                                       | Additional HTML attributes                                                |
+| `ui.languageDropdown.zIndex`    | `number`                      | `1000`                                                                              | Dropdown stacking order                                                   |
 
 ---
 

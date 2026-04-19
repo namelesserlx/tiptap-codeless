@@ -1,3 +1,5 @@
+import type {} from './vite-env';
+
 export * from './types';
 
 // Extension

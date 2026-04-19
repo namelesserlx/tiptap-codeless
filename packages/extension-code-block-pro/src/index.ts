@@ -1,3 +1,5 @@
+import type {} from './vite-env';
+
 export * from '@/components';
 export { CodeBlockPro, default } from '@/extension/CodeBlockProExtension';
 export * from '@/hooks';

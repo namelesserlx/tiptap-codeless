@@ -1,3 +1,6 @@
+import type {} from './vite-env';
+import type {} from './types/tiptap-starter-kit-commands';
+
 export * from './types';
 
 // 扩展

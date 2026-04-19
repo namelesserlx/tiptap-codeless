@@ -1,5 +1,6 @@
 import classNames from 'classnames';
 import React from 'react';
+import { useConfigContext } from '@/contexts';
 import { useMermaid } from '@/hooks/useMermaid';
 import type { CodeBlockTheme } from '@/types';
 
@@ -46,12 +47,14 @@ export const MermaidDiagram: React.FC<MermaidDiagramProps> = ({
     isCollapsed,
     diagramFromHeightRef,
 }) => {
+    const { messages } = useConfigContext();
     const { mermaidRef, isExpanded } = useMermaid({
         isMermaid,
         content,
         showDiagram,
         theme,
         diagramFromHeightRef,
+        messages: messages.mermaid,
     });
     // 不判断 mermaidRef.current，否则首屏 ref 未挂载会一直 return null，div 永远不会渲染
     if (!isMermaid || !showDiagram) {

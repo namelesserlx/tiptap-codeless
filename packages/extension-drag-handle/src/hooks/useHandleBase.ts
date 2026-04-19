@@ -27,8 +27,8 @@ export function useHandleBase() {
 
     // 合并样式配置
     const handleStyle = useMemo(
-        () => ({ ...DEFAULT_HANDLE_STYLE, ...options.handleStyle }),
-        [options.handleStyle]
+        () => ({ ...DEFAULT_HANDLE_STYLE, ...options.handleStyle, ...options.ui?.handle }),
+        [options.handleStyle, options.ui?.handle]
     );
 
     // 计算位置

@@ -2,7 +2,9 @@
  * CodeBlock Pro 类型定义
  */
 
+import type { DeepPartial, SupportedLocale } from '@tiptap-codeless/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
+import type { CodeBlockProMessages } from '@/i18n';
 
 /**
  * 代码块主题
@@ -147,6 +149,17 @@ export interface LazyRenderConfig {
  */
 export interface CodeBlockProOptions {
     /**
+     * 语言环境
+     * @default 'zh-CN'
+     */
+    locale?: SupportedLocale | string;
+
+    /**
+     * 自定义国际化文案
+     */
+    messages?: DeepPartial<CodeBlockProMessages>;
+
+    /**
      * Lowlight 实例（用于语法高亮）
      */
     lowlight?: unknown;
@@ -201,6 +214,15 @@ export interface CodeBlockProOptions {
      * HTML 属性
      */
     HTMLAttributes?: Record<string, unknown>;
+
+    /**
+     * UI 配置
+     */
+    ui?: {
+        languageDropdown?: {
+            zIndex?: number;
+        };
+    };
 }
 
 /**

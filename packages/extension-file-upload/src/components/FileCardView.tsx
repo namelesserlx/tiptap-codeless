@@ -40,13 +40,27 @@ const FileTypeIcon: React.FC<{ mimeType?: string }> = ({ mimeType }) => {
     return <span className="tiptap-upload-file__icon-inner">{label}</span>;
 };
 
-export const FileCardView: React.FC<NodeViewProps> = ({ node, selected }) => {
+export const FileCardView: React.FC<NodeViewProps> = ({ node, selected, editor }) => {
+    const storageMessages = (editor?.storage?.fileUpload?.messages ?? undefined) as
+        | {
+              fileCard?: {
+                  unnamedFile?: string;
+                  downloadFile?: string;
+              };
+              unnamedFile?: string;
+              downloadFile?: string;
+          }
+        | undefined;
     const attrs = node.attrs as {
         url: string;
         name: string;
         mimeType: string;
         size: number;
     };
+    const unnamedFileLabel =
+        storageMessages?.fileCard?.unnamedFile ?? storageMessages?.unnamedFile ?? '未命名文件';
+    const downloadFileLabel =
+        storageMessages?.fileCard?.downloadFile ?? storageMessages?.downloadFile ?? '下载文件';
 
     const meta = useMemo(() => {
         const parts: string[] = [];
@@ -83,14 +97,15 @@ export const FileCardView: React.FC<NodeViewProps> = ({ node, selected }) => {
                     <FileTypeIcon mimeType={attrs.mimeType} />
                 </div>
                 <div className="tiptap-upload-file__content">
-                    <div className="tiptap-upload-file__name">{attrs.name || '未命名文件'}</div>
+                    <div className="tiptap-upload-file__name">{attrs.name || unnamedFileLabel}</div>
                     {meta && <div className="tiptap-upload-file__meta">{meta}</div>}
                 </div>
                 <button
                     type="button"
                     className="tiptap-upload-file__download"
                     onClick={handleDownload}
-                    title="下载文件"
+                    title={downloadFileLabel}
+                    aria-label={downloadFileLabel}
                 >
                     <DownloadIcon />
                 </button>

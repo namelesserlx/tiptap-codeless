@@ -1,4 +1,6 @@
+import type { DeepPartial, SupportedLocale } from '@tiptap-codeless/core';
 import type { Editor } from '@tiptap/core';
+import type { FileUploadMessages } from '@/i18n';
 
 export type FileKind = 'image' | 'video' | 'file';
 
@@ -47,6 +49,17 @@ export type LocalStorageOptions = {
 
 export type FileUploadOptions = {
     /**
+     * 语言环境
+     * @default 'zh-CN'
+     */
+    locale?: SupportedLocale | string;
+
+    /**
+     * 自定义国际化文案
+     */
+    messages?: DeepPartial<FileUploadMessages>;
+
+    /**
      * 存储模式
      * @default 'memory'
      */
@@ -65,12 +78,23 @@ export type FileUploadOptions = {
 
     /**
      * 图片气泡菜单配置
+     * @deprecated 优先使用 ui.bubbleMenu
      */
     imgBubbleMenuConfig?: {
         /** 是否启用 */
         enabled?: boolean;
         /** z-index */
         zIndex?: number;
+    };
+
+    /**
+     * 统一 UI 配置
+     */
+    ui?: {
+        bubbleMenu?: {
+            enabled?: boolean;
+            zIndex?: number;
+        };
     };
 
     /** Accept attribute for file picker. Example: 'image/*,video/*' */

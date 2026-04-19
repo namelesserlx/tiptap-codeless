@@ -1,12 +1,14 @@
 {
     "name": "@tiptap-codeless/core",
     "version": "0.1.0",
-    "description": "Core utilities and base classes for Tiptap Codeless extensions",
+    "description": "Shared runtime helpers, i18n utilities, and React hooks for Tiptap Codeless extensions",
     "keywords": [
         "tiptap",
         "editor",
         "core",
-        "utilities"
+        "utilities",
+        "i18n",
+        "react-hooks"
     ],
     "author": "namelesserlx (https://github.com/namelesserlx)",
     "license": "MIT",
@@ -35,7 +37,7 @@
     ],
     "scripts": {
         "dev": "vite build --watch",
-        "build": "vite build && tsc --emitDeclarationOnly --declaration --declarationMap",
+        "build": "rm -rf dist && vite build && node ../../scripts/bundle-dts.mjs --project tsconfig.json --entry src/index.ts --output dist/index.d.ts",
         "type-check": "tsc --noEmit",
         "clean": "rm -rf dist"
     },

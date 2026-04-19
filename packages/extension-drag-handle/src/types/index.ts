@@ -2,9 +2,11 @@
  * Drag Handle 类型定义
  */
 
+import type { DeepPartial, SupportedLocale } from '@tiptap-codeless/core';
 import type { Editor } from '@tiptap/core';
 import type { Node } from '@tiptap/pm/model';
 import React from 'react';
+import type { DragHandleMessages } from '../i18n';
 
 /**
  * 拖拽手柄模式
@@ -61,6 +63,12 @@ export interface CurrentNodeInfo {
  * 拖拽手柄扩展选项
  */
 export interface DragHandleOptions {
+    /** 语言环境 */
+    locale?: SupportedLocale | string;
+
+    /** 自定义国际化文案 */
+    messages?: DeepPartial<DragHandleMessages>;
+
     /** 拖拽手柄元素（可自定义） */
     element?: {
         insert?: React.ReactNode | HTMLElement;
@@ -153,6 +161,21 @@ export interface DragHandleOptions {
 
     /** 只在这些节点类型上显示 */
     includeOnlyNodes?: string[];
+
+    /** 统一 UI 配置 */
+    ui?: {
+        handle?: {
+            width?: number;
+            height?: number;
+            hoverDelay?: number;
+            hideDelay?: number;
+            zIndex?: number;
+            iconSize?: number;
+        };
+        menu?: {
+            zIndex?: number;
+        };
+    };
 }
 
 /**

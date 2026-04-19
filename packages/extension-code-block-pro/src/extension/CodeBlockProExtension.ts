@@ -34,6 +34,8 @@ const defaultLanguages: LanguageConfig[] = [
 ];
 
 const defaultOptions: CodeBlockProOptions = {
+    locale: 'zh-CN',
+    messages: {},
     languages: defaultLanguages,
     defaultLanguage: null,
     theme: 'auto',
@@ -64,6 +66,11 @@ const defaultOptions: CodeBlockProOptions = {
     },
     HTMLAttributes: {
         class: 'code-block-pro',
+    },
+    ui: {
+        languageDropdown: {
+            zIndex: 1000,
+        },
     },
 };
 
@@ -102,7 +109,10 @@ export const CodeBlockPro = CodeBlockLowlight.extend<CodeBlockProOptions>({
     name: 'codeBlockPro',
 
     addOptions() {
-        return defaultOptions;
+        return {
+            ...this.parent?.(),
+            ...defaultOptions,
+        };
     },
 
     addAttributes() {

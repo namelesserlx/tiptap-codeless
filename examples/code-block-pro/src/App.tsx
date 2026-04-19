@@ -154,6 +154,7 @@ function App() {
             }),
             CodeBlockPro.configure({
                 lowlight,
+                locale: 'zh-CN',
                 defaultLanguage: 'javascript',
                 theme: theme,
                 // macosControls: {
@@ -180,6 +181,11 @@ function App() {
                     enabled: true, // 启用延迟渲染
                     rootMargin: '100px', // 提前 100px 开始渲染
                     placeholderHeight: 120, // 占位符高度
+                },
+                ui: {
+                    languageDropdown: {
+                        zIndex: 2400,
+                    },
                 },
             }),
         ],

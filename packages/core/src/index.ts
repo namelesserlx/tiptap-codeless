@@ -9,3 +9,6 @@ export * from './utils/injectStyles';
 
 // React Hooks
 export * from './hooks/useClickOutside';
+
+// i18n
+export * from './i18n';

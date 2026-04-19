@@ -1,7 +1,7 @@
 {
     "name": "@tiptap-codeless/extension-file-upload",
     "version": "0.1.1",
-    "description": "File upload extension for Tiptap: drag&drop, paste, preview, resize, and pluggable storage",
+    "description": "Tiptap file upload extension with drag and drop, paste, image resize, preview cards, pluggable storage, and built-in i18n",
     "keywords": [
         "tiptap",
         "editor",
@@ -9,7 +9,10 @@
         "image",
         "video",
         "file",
-        "react"
+        "react",
+        "file-upload",
+        "image-resize",
+        "i18n"
     ],
     "author": "namelesserlx (https://github.com/namelesserlx)",
     "license": "MIT",
@@ -38,9 +41,9 @@
     ],
     "scripts": {
         "dev": "tsc && vite build --watch",
-        "build": "vite build && tsc",
+        "build": "rm -rf dist && vite build && node ../../scripts/bundle-dts.mjs --project tsconfig.json --entry src/index.ts --output dist/index.d.ts --external-import @tiptap-codeless/core",
         "type-check": "tsc --noEmit",
-        "lint": "eslint src",
+        "lint": "eslint src test",
         "clean": "rm -rf dist",
         "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
     },

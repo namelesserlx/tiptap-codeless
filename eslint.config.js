@@ -36,6 +36,13 @@ export default defineConfig([
         'prettier'
     ),
     {
+        settings: {
+            react: {
+                version: 'detect',
+            },
+        },
+    },
+    {
         files: ['**/*.ts', '**/*.tsx'],
         rules: {
             '@typescript-eslint/no-explicit-any': 'warn',
@@ -45,11 +52,6 @@ export default defineConfig([
             'react/react-in-jsx-scope': 'off',
             'react/prop-types': 'off',
             'no-console': ['warn', { allow: ['warn', 'error'] }],
-        },
-        settings: {
-            react: {
-                version: 'detect',
-            },
         },
     },
 ]);

@@ -3,7 +3,9 @@
 File upload extension for Tiptap: drag & drop, paste, preview, resize, and pluggable storage.
 
 - [English](README.md) (Current)
-- [中文](README.zh.md)
+- [中文](https://github.com/namelesserlx/tiptap-codeless/blob/main/packages/extension-file-upload/docs.zh-CN.md)
+- [繁體中文](../../README.zh-TW.md)
+- [日本語](../../README.ja.md)
 
 ---
 
@@ -43,6 +45,7 @@ const editor = useEditor({
     extensions: [
         StarterKit,
         FileUpload.configure({
+            locale: 'en',
             storageMode: 'memory', // Default
         }),
     ],
@@ -131,11 +134,32 @@ FileUpload.configure({
 
 ## ⚙️ Configuration Options
 
+### Shared i18n options
+
+```ts
+FileUpload.configure({
+    locale: 'ja',
+    messages: {
+        fileCard: {
+            downloadFile: 'ファイルをダウンロード',
+        },
+    },
+    ui: {
+        bubbleMenu: {
+            zIndex: 2400,
+        },
+    },
+});
+```
+
 | Option                | Type                                          | Default                           | Description                                      |
 | --------------------- | --------------------------------------------- | --------------------------------- | ------------------------------------------------ |
+| `locale`              | `'zh-CN' \| 'zh-TW' \| 'en' \| 'ja'`          | `'zh-CN'`                         | Built-in UI locale                               |
+| `messages`            | `DeepPartial<FileUploadMessages>`             | `{}`                              | Override built-in labels                         |
 | `storageMode`         | `'memory' \| 'base64' \| 'local' \| 'custom'` | `'memory'`                        | Storage mode                                     |
 | `localStorageOptions` | `LocalStorageOptions`                         | `undefined`                       | Local storage options (local mode only)          |
-| `imgBubbleMenuConfig` | `{ enabled?: boolean; zIndex?: number }`      | `{ enabled: true, zIndex: 1000 }` | Image bubble menu configuration                  |
+| `imgBubbleMenuConfig` | `{ enabled?: boolean; zIndex?: number }`      | `{ enabled: true, zIndex: 1000 }` | Legacy bubble menu config; prefer `ui.bubbleMenu` |
+| `ui.bubbleMenu`       | `{ enabled?: boolean; zIndex?: number }`      | `{ enabled: true, zIndex: 1000 }` | Canonical bubble menu config                     |
 | `upload`              | `UploadHandler`                               | `undefined`                       | Custom upload handler (required for custom mode) |
 | `accept`              | `string`                                      | `undefined`                       | Accepted file types for file picker              |
 | `multiple`            | `boolean`                                     | `true`                            | Allow multiple selection                         |

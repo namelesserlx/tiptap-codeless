@@ -60,6 +60,7 @@ function App() {
                     class: 'tiptap-drop-cursor',
                 }),
                 FileUpload.configure({
+                    locale: 'zh-CN',
                     storageMode,
                     localStorageOptions: {
                         // 复用之前选择的目录
@@ -67,6 +68,12 @@ function App() {
                     },
                     // 当 storageMode 为 'custom' 时使用自定义上传处理器
                     upload: createCosUploadHandler(),
+                    ui: {
+                        bubbleMenu: {
+                            enabled: true,
+                            zIndex: 9999,
+                        },
+                    },
                     imgBubbleMenuConfig: {
                         enabled: true,
                         zIndex: 9999,

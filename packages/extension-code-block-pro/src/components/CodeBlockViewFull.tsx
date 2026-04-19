@@ -4,6 +4,7 @@ import React, { useCallback, useMemo, useRef } from 'react';
 
 import { ConfigContextProvider, MermaidContextProvider, StateContextProvider } from '@/contexts';
 import { useCodeBlock, useCollapse, useFullscreen, useLineNumbers } from '@/hooks';
+import { resolveCodeBlockProMessages } from '@/i18n';
 import type { CodeBlockViewProps, LanguageConfig } from '@/types';
 import { CodeBlockBody } from '@/components/CodeBlockBody';
 import { ExpandButton } from '@/components/ExpandButton';
@@ -26,6 +27,10 @@ export const CodeBlockViewFull: React.FC<CodeBlockViewProps> = ({
     const languages: LanguageConfig[] = useMemo(() => options.languages || [], [options.languages]);
 
     const effectiveTheme = theme || options.theme || 'auto';
+    const messages = useMemo(
+        () => resolveCodeBlockProMessages(options.locale, options.messages),
+        [options.locale, options.messages]
+    );
 
     const handleLanguageChange = useCallback(
         (newLanguage: string) => {
@@ -91,6 +96,7 @@ export const CodeBlockViewFull: React.FC<CodeBlockViewProps> = ({
             options,
             languages,
             theme: effectiveTheme,
+            messages,
             updateAttributes,
             deleteNode,
             getPos,
@@ -108,6 +114,7 @@ export const CodeBlockViewFull: React.FC<CodeBlockViewProps> = ({
             options,
             languages,
             effectiveTheme,
+            messages,
             updateAttributes,
             deleteNode,
             getPos,

@@ -3,7 +3,7 @@
 Tiptap 文件上传扩展：支持拖拽、粘贴、预览、缩放和可插拔存储。
 
 - [English](README.md)
-- [中文](README.zh.md) (当前)
+- [中文](docs.zh-CN.md) (当前)
 
 ---
 

@@ -3,6 +3,7 @@
  */
 
 import React, { createContext, useContext } from 'react';
+import type { CodeBlockProMessages } from '@/i18n';
 import type {
     CodeBlockAttributes,
     CodeBlockProOptions,
@@ -30,6 +31,11 @@ export interface ConfigContextValue {
      * 当前主题
      */
     theme: CodeBlockTheme;
+
+    /**
+     * 解析后的国际化文案
+     */
+    messages: CodeBlockProMessages;
 
     /**
      * 更新节点属性

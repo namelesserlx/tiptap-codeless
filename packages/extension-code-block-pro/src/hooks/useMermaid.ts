@@ -4,6 +4,7 @@
 
 import type { MutableRefObject } from 'react';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { CodeBlockProMessages } from '@/i18n';
 import type { CodeBlockTheme } from '@/types';
 
 /** 高度变化超过此阈值（px）时才执行动画，避免小幅抖动也过渡 */
@@ -36,13 +37,18 @@ export interface UseMermaidOptions {
      * 切换为图表前写入的代码区高度（ref），首次展开从该高度过渡到图表高度，避免整体先塌再撑
      */
     diagramFromHeightRef?: MutableRefObject<number>;
+
+    /**
+     * 国际化文案
+     */
+    messages: CodeBlockProMessages['mermaid'];
 }
 
 /**
  * Mermaid 图表逻辑 Hook
  */
 export function useMermaid(options: UseMermaidOptions) {
-    const { isMermaid, content, showDiagram, theme, diagramFromHeightRef } = options;
+    const { isMermaid, content, showDiagram, theme, diagramFromHeightRef, messages } = options;
 
     const mermaidRef = useRef<HTMLDivElement>(null);
     const mermaidIdRef = useRef<string>(`mermaid-${Math.random().toString(36).substr(2, 9)}`);
@@ -171,7 +177,7 @@ export function useMermaid(options: UseMermaidOptions) {
           color: var(--cbp-text-secondary, #666);
           font-size: 14px;
         ">
-          代码为空，请输入 Mermaid 代码
+          ${messages.empty}
         </div>
       `;
             const t = requestAnimationFrame(() => {
@@ -217,7 +223,7 @@ export function useMermaid(options: UseMermaidOptions) {
               font-size: 14px;
               line-height: 1.5;
             ">
-              <div style="font-weight: bold; margin-bottom: 8px;">Mermaid 渲染错误</div>
+              <div style="font-weight: bold; margin-bottom: 8px;">${messages.renderErrorTitle}</div>
               <div>${errorMessage}</div>
             </div>
           `;
@@ -231,7 +237,7 @@ export function useMermaid(options: UseMermaidOptions) {
         return () => {
             cancelled = true;
         };
-    }, [isMermaid, showDiagram, content, theme, renderWithHeightTransition]);
+    }, [isMermaid, showDiagram, content, theme, messages, renderWithHeightTransition]);
 
     return {
         mermaidRef,

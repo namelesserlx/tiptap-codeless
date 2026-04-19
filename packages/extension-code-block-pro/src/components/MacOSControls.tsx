@@ -13,7 +13,7 @@ export interface MacOSControlsProps {
  * MacOS 控制按钮组件
  */
 export const MacOSControls: React.FC<MacOSControlsProps> = React.memo(({ className }) => {
-    const { options, deleteNode, getPos } = useConfigContext();
+    const { options, messages, deleteNode, getPos } = useConfigContext();
 
     const { isCollapsed, isFullscreen, isCollapsible, toggleCollapse, handleFullscreen } =
         useStateContext();
@@ -39,8 +39,8 @@ export const MacOSControls: React.FC<MacOSControlsProps> = React.memo(({ classNa
                     type="button"
                     className="control-button close"
                     onClick={handleClose}
-                    title="关闭"
-                    aria-label="关闭代码块"
+                    title={messages.controls.close}
+                    aria-label={messages.controls.closeCodeBlock}
                 >
                     <span className="control-dot red" />
                 </button>
@@ -53,8 +53,12 @@ export const MacOSControls: React.FC<MacOSControlsProps> = React.memo(({ classNa
                         'is-collapsed': isCollapsed,
                     })}
                     onClick={toggleCollapse}
-                    title={isCollapsed ? '展开' : '折叠'}
-                    aria-label={isCollapsed ? '展开代码块' : '折叠代码块'}
+                    title={isCollapsed ? messages.controls.expand : messages.controls.collapse}
+                    aria-label={
+                        isCollapsed
+                            ? messages.controls.expandCodeBlock
+                            : messages.controls.collapseCodeBlock
+                    }
                 >
                     <span className="control-dot yellow" />
                 </button>
@@ -65,8 +69,16 @@ export const MacOSControls: React.FC<MacOSControlsProps> = React.memo(({ classNa
                     type="button"
                     className="control-button fullscreen"
                     onClick={handleFullscreen}
-                    title={isFullscreen ? '退出全屏' : '全屏'}
-                    aria-label={isFullscreen ? '退出全屏模式' : '全屏显示代码块'}
+                    title={
+                        isFullscreen
+                            ? messages.controls.exitFullscreen
+                            : messages.controls.fullscreen
+                    }
+                    aria-label={
+                        isFullscreen
+                            ? messages.controls.exitFullscreenCodeBlock
+                            : messages.controls.fullscreenCodeBlock
+                    }
                 >
                     <span className="control-dot green" />
                 </button>

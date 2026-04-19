@@ -30,6 +30,8 @@ declare module '@tiptap/core' {
  * 默认配置
  */
 const defaultOptions: DragHandleOptions = {
+    locale: 'zh-CN',
+    messages: {},
     offset: {
         x: -32,
         y: 0,
@@ -49,6 +51,11 @@ const defaultOptions: DragHandleOptions = {
         hideDelay: 100,
     },
     excludeNodes: [],
+    ui: {
+        menu: {
+            zIndex: 1000,
+        },
+    },
 };
 
 /**

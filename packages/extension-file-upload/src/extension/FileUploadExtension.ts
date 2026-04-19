@@ -2,6 +2,7 @@ import { createFileUploadPlugin } from '@/extension/FileUploadPlugin';
 import { UploadFileCard } from '@/extension/nodes/FileCardNode';
 import { UploadImage } from '@/extension/nodes/ImageNode';
 import { UploadVideo } from '@/extension/nodes/VideoNode';
+import { resolveFileUploadMessages } from '@/i18n';
 import type {
     FileUploadOptions,
     InsertFilesParams,
@@ -31,16 +32,25 @@ declare module '@tiptap/core' {
                 enabled?: boolean;
                 zIndex?: number;
             };
+            messages?: ReturnType<typeof resolveFileUploadMessages>;
         };
     }
 }
 
 const defaultOptions: FileUploadOptions = {
+    locale: 'zh-CN',
+    messages: {},
     storageMode: 'memory',
     localStorageOptions: undefined,
     imgBubbleMenuConfig: {
         enabled: true,
         zIndex: 1000,
+    },
+    ui: {
+        bubbleMenu: {
+            enabled: true,
+            zIndex: 1000,
+        },
     },
     upload: undefined,
     accept: undefined,
@@ -59,8 +69,20 @@ export const FileUpload = Extension.create<FileUploadOptions>({
     },
 
     addStorage() {
+        const bubbleMenuConfig = {
+            enabled:
+                this.options.ui?.bubbleMenu?.enabled ??
+                this.options.imgBubbleMenuConfig?.enabled ??
+                defaultOptions.ui?.bubbleMenu?.enabled,
+            zIndex:
+                this.options.ui?.bubbleMenu?.zIndex ??
+                this.options.imgBubbleMenuConfig?.zIndex ??
+                defaultOptions.ui?.bubbleMenu?.zIndex,
+        };
+
         return {
-            imgBubbleMenuConfig: this.options.imgBubbleMenuConfig,
+            imgBubbleMenuConfig: bubbleMenuConfig,
+            messages: resolveFileUploadMessages(this.options.locale, this.options.messages),
         };
     },
 

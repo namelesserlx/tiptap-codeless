@@ -22,6 +22,15 @@ export const ResizableImageView: React.FC<NodeViewProps> = ({
               zIndex?: number;
           }
         | undefined;
+    const messages = editor?.storage?.fileUpload?.messages as
+        | {
+              bubbleMenu?: {
+                  alignLeft?: string;
+                  alignCenter?: string;
+                  alignRight?: string;
+              };
+          }
+        | undefined;
     const imgRef = useRef<HTMLImageElement | null>(null);
     const frameRef = useRef<HTMLDivElement | null>(null);
     const dragRef = useRef<{
@@ -276,6 +285,11 @@ export const ResizableImageView: React.FC<NodeViewProps> = ({
                         <ImageBubbleMenu
                             align={attrs.align ?? null}
                             onAlignChange={handleAlignChange}
+                            labels={{
+                                alignLeft: messages?.bubbleMenu?.alignLeft,
+                                alignCenter: messages?.bubbleMenu?.alignCenter,
+                                alignRight: messages?.bubbleMenu?.alignRight,
+                            }}
                         />
                     </div>,
                     document.body
