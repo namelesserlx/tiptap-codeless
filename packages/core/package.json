@@ -1,6 +1,6 @@
 {
     "name": "@tiptap-codeless/core",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "Shared runtime helpers, i18n utilities, and React hooks for Tiptap Codeless extensions",
     "keywords": [
         "tiptap",

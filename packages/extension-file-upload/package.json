@@ -1,6 +1,6 @@
 {
     "name": "@tiptap-codeless/extension-file-upload",
-    "version": "0.1.1",
+    "version": "1.0.0",
     "description": "Tiptap file upload extension with drag and drop, paste, image resize, preview cards, pluggable storage, and built-in i18n",
     "keywords": [
         "tiptap",

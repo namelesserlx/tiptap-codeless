@@ -1,5 +1,13 @@
 # example-code-block-pro
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies [c2f0b6c]
+    - @tiptap-codeless/core@1.0.0
+    - @tiptap-codeless/extension-code-block-pro@1.0.0
+
 ## 0.0.3
 
 ### Patch Changes

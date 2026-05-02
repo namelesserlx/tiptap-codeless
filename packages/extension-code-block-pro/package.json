@@ -1,6 +1,6 @@
 {
     "name": "@tiptap-codeless/extension-code-block-pro",
-    "version": "0.1.1",
+    "version": "1.0.0",
     "description": "Advanced Tiptap code block extension with syntax highlighting, Mermaid diagrams, fullscreen mode, and built-in i18n",
     "keywords": [
         "tiptap",

@@ -1,6 +1,6 @@
 {
     "name": "@tiptap-codeless/extension-drag-handle",
-    "version": "0.1.1",
+    "version": "1.0.0",
     "description": "Tiptap drag handle and slash insert menu extension with customizable items, React UI, and built-in i18n",
     "keywords": [
         "tiptap",
