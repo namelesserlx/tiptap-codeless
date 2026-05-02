@@ -1,0 +1,1 @@
+This is a demo fixture file for file-upload end-to-end testing.

@@ -1,4 +1,8 @@
+import type {} from './vite-env';
+import type {} from './types/tiptap-starter-kit-commands';
+
 export * from './types';
+export * from './config/normalizeOptions';
 
 // 扩展
 export { DragHandle as default, DragHandle } from './extension/DragHandleExtension';

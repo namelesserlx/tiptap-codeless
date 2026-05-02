@@ -1,10 +1,17 @@
 import type { Editor } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
+import {
+    applyTransactionMetaToPluginState,
+    createInitialPluginState,
+    hideHandleState,
+    showHandleForNode,
+    syncCurrentNode,
+} from '@/runtime/pluginState';
+import { isPointInNodeSafeZone } from '@/runtime/visibility';
 import type { CurrentNodeInfo, DragHandleOptions, DragHandlePluginState } from '../types';
 import { DRAG_HANDLE_MIME, handleDrop } from '../utils/drag';
 import { getNodeInfoFromCoords, getNodeInfoFromPos, shouldShowHandle } from '../utils/node';
-import { throttle } from '../utils/position';
 
 export const dragHandlePluginKey = new PluginKey<DragHandlePluginState>('dragHandle');
 
@@ -14,26 +21,27 @@ export interface DragHandlePluginProps {
     onStateChange: (state: DragHandlePluginState) => void;
 }
 
-/**
- * 创建拖拽手柄插件
- */
 export function createDragHandlePlugin({
     editor,
     options,
     onStateChange,
 }: DragHandlePluginProps): Plugin {
-    let currentState: DragHandlePluginState = {
-        locked: false,
-        currentNode: null,
-        isDragging: false,
-        isVisible: false,
-        insertMenuCommandRange: null,
-    };
+    const dragEnabled = options.drag?.enabled !== false;
+    const insertMenuEnabled = options.insertMenu?.enabled !== false;
+    let currentState: DragHandlePluginState = createInitialPluginState();
 
     let rafId: number | null = null;
+    let pendingMouseMove:
+        | {
+              view: EditorView;
+              x: number;
+              y: number;
+          }
+        | null = null;
     let hideTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let showTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let pendingShowNodePos: number | null = null;
 
-    // 用于缓存 dragover 事件中的 DOM 检查结果，减少重复计算
     let lastDragoverTarget: Element | null = null;
     let lastDragoverResult: boolean | null = null;
 
@@ -44,77 +52,94 @@ export function createDragHandlePlugin({
         }
     };
 
-    const updateState = (partial: Partial<DragHandlePluginState>) => {
-        currentState = { ...currentState, ...partial };
-        onStateChange(currentState);
+    const cancelScheduledShow = () => {
+        if (showTimeoutId) {
+            clearTimeout(showTimeoutId);
+            showTimeoutId = null;
+        }
+        pendingShowNodePos = null;
     };
 
-    const hide = () => {
-        if (currentState.locked || currentState.isDragging) {
+    const commitState = (nextState: DragHandlePluginState) => {
+        if (nextState === currentState) {
             return;
         }
 
-        updateState({
-            currentNode: null,
-            isVisible: false,
-        });
+        currentState = nextState;
+        onStateChange(currentState);
+    };
 
-        options.onNodeChange?.(null);
+    const emitNodeChange = (nodeInfo: CurrentNodeInfo | null) => {
+        options.events?.onNodeChange?.(nodeInfo);
+    };
+
+    const hide = () => {
+        cancelScheduledShow();
+
+        const previousState = currentState;
+        const nextState = hideHandleState(currentState);
+        commitState(nextState);
+
+        if (nextState !== previousState) {
+            emitNodeChange(null);
+        }
     };
 
     const show = (nodeInfo: CurrentNodeInfo) => {
         cancelScheduledHide();
+        cancelScheduledShow();
 
-        // 检查是否应该显示
-        const shouldShow = shouldShowHandle(
-            nodeInfo.node,
-            options?.excludeNodes,
-            options?.includeOnlyNodes
-        );
+        const shouldShow = shouldShowHandle(nodeInfo.node, options.nodes);
         if (!shouldShow) {
             return;
         }
 
-        updateState({
-            currentNode: nodeInfo,
-            isVisible: true,
-        });
+        const previousState = currentState;
+        const nextState = showHandleForNode(currentState, nodeInfo);
+        commitState(nextState);
 
-        options.onNodeChange?.(nodeInfo);
+        if (nextState !== previousState) {
+            emitNodeChange(nodeInfo);
+        }
+    };
+
+    const scheduleShow = (nodeInfo: CurrentNodeInfo) => {
+        cancelScheduledHide();
+
+        const delay = options.handle?.hoverDelay ?? 0;
+
+        if (pendingShowNodePos === nodeInfo.pos) {
+            return;
+        }
+
+        if (delay <= 0) {
+            show(nodeInfo);
+            return;
+        }
+
+        cancelScheduledShow();
+        pendingShowNodePos = nodeInfo.pos;
+        showTimeoutId = setTimeout(() => {
+            showTimeoutId = null;
+            pendingShowNodePos = null;
+            show(nodeInfo);
+        }, delay);
     };
 
     const scheduleHide = () => {
+        cancelScheduledShow();
         if (hideTimeoutId) {
-            clearTimeout(hideTimeoutId);
+            return;
         }
 
-        // 默认延迟 300ms，给用户足够时间移动到手柄
-        const delay = options?.handleStyle?.hideDelay ?? 300;
+        const delay = options.handle?.hideDelay ?? 100;
         hideTimeoutId = setTimeout(hide, delay);
     };
 
-    /**
-     * 检查坐标是否在当前节点的"安全区域"内
-     * 安全区域 = 节点左侧 100px 范围 + 节点垂直范围（上下各扩展 20px 容差）
-     */
-    const isInSafeZone = (x: number, y: number): boolean => {
-        if (!currentState.currentNode) return false;
-        // 使用实时的 DOM rect，而不是缓存的 rect
-        const dom = currentState.currentNode.dom;
-        if (!dom || !dom.getBoundingClientRect) return false;
-        const rect = dom.getBoundingClientRect();
-        const safeLeft = rect.left - 100;
-        const verticalTolerance = 20;
-        return (
-            x >= safeLeft &&
-            x <= rect.right &&
-            y >= rect.top - verticalTolerance &&
-            y <= rect.bottom + verticalTolerance
-        );
-    };
+    const isInSafeZone = (x: number, y: number): boolean =>
+        isPointInNodeSafeZone(currentState.currentNode, x, y);
 
-    // 处理鼠标移动（节流）
-    const handleMouseMove = throttle((view: EditorView, x: number, y: number) => {
+    const handleMouseMove = (view: EditorView, x: number, y: number) => {
         if (currentState.locked || currentState.isDragging) {
             return;
         }
@@ -124,119 +149,67 @@ export function createDragHandlePlugin({
             return;
         }
 
-        // 如果鼠标在当前节点的"安全区域"内（包括手柄区域），保持显示
         if (isInSafeZone(x, y)) {
             cancelScheduledHide();
             return;
         }
 
-        // 从坐标获取节点信息（如果直接获取失败，会自动向右查找）
         const nodeInfo = getNodeInfoFromCoords(view, x, y, {
             fallbackDirection: 'right',
             fallbackDistance: 50,
         });
 
         if (nodeInfo) {
-            // 检查是否是不同的节点
             if (currentState.currentNode?.pos !== nodeInfo.pos) {
-                show(nodeInfo);
+                scheduleShow(nodeInfo);
             }
         } else {
             scheduleHide();
         }
-    }, 55);
+    };
 
-    /**
-     * 检查元素是否在编辑器内但无法通过插件层正常处理
-     *
-     * 这种情况通常发生在 NodeView 内的元素上（如 React 渲染的原子节点）。
-     * 当拖拽在这些元素上时，插件层的 dragover 事件可能无法正常触发，因为
-     * 这些元素通常不在可编辑区域内（contentEditable="false"）。
-     *
-     * 判断逻辑（通用且不依赖具体的 DOM 结构或类名）：
-     * 1. 元素必须在编辑器容器内
-     * 2. 元素不能是编辑器容器本身（编辑器容器由插件层正常处理）
-     * 3. 从元素向上遍历，检查是否在可编辑区域内
-     *    - 如果找到 contentEditable="true" 的父元素，说明在可编辑区域内，插件层可以处理
-     *    - 如果找到 contentEditable="false" 的父元素，说明在 NodeView 内，需要全局处理
-     *    - contentEditable 是标准的 HTML 属性，这是通用的判断方式，不依赖特定库的实现
-     */
     const isNonEditableNodeInEditor = (element: Element, editorView: EditorView): boolean => {
         const editorDom = editorView.dom;
 
-        // 1. 必须在编辑器容器内
-        if (!editorDom.contains(element)) {
+        if (!editorDom.contains(element) || element === editorDom) {
             return false;
         }
 
-        // 2. 不能是编辑器容器本身（编辑器容器由插件层正常处理）
-        if (element === editorDom) {
-            return false;
-        }
-
-        // 3. 从元素向上遍历父元素链，查找 contentEditable 属性
-        // contentEditable 是标准的 HTML 属性，用于标识元素是否可编辑
-        // 这是通用的判断方式，不依赖任何特定的库或实现细节
         let current: Element | null = element;
 
         while (current && current !== editorDom) {
             const contentEditable = current.getAttribute('contenteditable');
 
-            // 如果找到 contentEditable="true"，说明在可编辑区域内
-            // 插件层可以正常处理，不需要全局处理
             if (contentEditable === 'true') {
                 return false;
             }
 
-            // 如果找到 contentEditable="false"，说明这是非可编辑区域
-            // 通常是 NodeView 的包装器（如 React NodeView、Vue NodeView 等）
-            // 需要全局处理以确保 drop 事件可以触发
             if (contentEditable === 'false') {
                 return true;
             }
 
-            // 如果 contentEditable 是 null（未设置），继续向上查找
             current = current.parentElement;
         }
 
-        // 4. 如果遍历到编辑器容器都没有找到明确的 contentEditable 设置
-        // 检查编辑器容器本身是否可编辑
-        const editorContentEditable = editorDom.getAttribute('contenteditable');
-        if (editorContentEditable === 'true') {
-            // 编辑器是可编辑的，但元素没有明确的 contentEditable 设置
-            // 默认认为在可编辑区域内，由插件层处理
-            return false;
-        }
-
-        // 5. 保守策略：如果无法确定，默认需要全局处理
-        // 这确保了在任何情况下 drop 事件都能正常触发
-        return true;
+        return editorDom.getAttribute('contenteditable') !== 'true';
     };
 
-    // 全局 dragover 监听器（确保在原子节点上也能触发 drop）
-    // 当鼠标在原子节点的 NodeView 上时，插件层的 dragover 可能无法触发，需要全局处理
     const globalDragoverHandler = (event: DragEvent) => {
         const isDragHandle = event.dataTransfer?.types.includes(DRAG_HANDLE_MIME);
         if (!isDragHandle) return;
 
-        const target = event.target as Element;
+        const target = event.target as Element | null;
         if (!target) return;
 
-        // 使用缓存来减少 DOM 检查的开销
-        // 如果目标元素和上次相同，直接使用缓存结果
         let shouldHandle = false;
         if (target === lastDragoverTarget && lastDragoverResult !== null) {
-            // 目标元素相同，使用缓存结果（避免重复的 DOM 遍历）
             shouldHandle = lastDragoverResult;
         } else {
-            // 目标元素变化了，重新检查并更新缓存
             shouldHandle = isNonEditableNodeInEditor(target, editor.view);
             lastDragoverTarget = target;
             lastDragoverResult = shouldHandle;
         }
 
-        // 关键：必须每次都调用 preventDefault 才能触发 drop 事件
-        // 但我们只在确定需要处理时才设置 dropEffect
         if (shouldHandle) {
             event.preventDefault();
             if (event.dataTransfer) {
@@ -245,12 +218,14 @@ export function createDragHandlePlugin({
         }
     };
 
-    // 全局 drop 监听器
     const globalDropHandler = (_event: DragEvent) => {
         // 全局监听器用于确保 drop 事件能够被捕获
     };
-    document.addEventListener('dragover', globalDragoverHandler, true);
-    document.addEventListener('drop', globalDropHandler, true);
+
+    if (dragEnabled) {
+        document.addEventListener('dragover', globalDragoverHandler, true);
+        document.addEventListener('drop', globalDropHandler, true);
+    }
 
     return new Plugin({
         key: dragHandlePluginKey,
@@ -261,86 +236,42 @@ export function createDragHandlePlugin({
             },
 
             apply(tr) {
-                // 取消/重新安排隐藏（来自组件层的 hover 等）
-                const cancelHideMeta = tr.getMeta('cancelDragHandleHide');
-                if (cancelHideMeta) {
+                if (tr.getMeta('cancelDragHandleHide')) {
                     cancelScheduledHide();
                 }
 
-                const scheduleHideMeta = tr.getMeta('scheduleDragHandleHide');
-                if (scheduleHideMeta) {
+                if (tr.getMeta('scheduleDragHandleHide')) {
                     scheduleHide();
                 }
 
-                // 处理锁定状态
-                const lockMeta = tr.getMeta('lockDragHandle');
-                if (lockMeta !== undefined) {
-                    updateState({ locked: lockMeta });
+                const previousState = currentState;
+                let nextState = applyTransactionMetaToPluginState(currentState, tr);
+
+                if (nextState.isDragging && !previousState.isDragging) {
+                    lastDragoverTarget = null;
+                    lastDragoverResult = null;
                 }
 
-                // 处理隐藏请求
-                const hideMeta = tr.getMeta('hideDragHandle');
-                if (hideMeta) {
-                    hide();
+                if (previousState.currentNode && !nextState.currentNode) {
+                    emitNodeChange(null);
                 }
 
-                // 处理拖拽状态
-                const draggingMeta = tr.getMeta('dragHandleDragging');
-                if (draggingMeta !== undefined) {
-                    updateState({ isDragging: draggingMeta });
-                    // 拖拽开始时重置缓存
-                    if (draggingMeta) {
-                        // 清除 dragover 缓存
-                        lastDragoverTarget = null;
-                        lastDragoverResult = null;
-                    }
-                }
+                if (tr.docChanged && nextState.currentNode) {
+                    const newPos = tr.mapping.map(nextState.currentNode.pos);
+                    const nodeInfo = getNodeInfoFromPos(editor.view, newPos);
 
-                // 由输入命令打开菜单时，记录命令范围
-                const openInsertMenuMeta = tr.getMeta('openInsertMenu');
-                if (openInsertMenuMeta?.commandRange) {
-                    updateState({ insertMenuCommandRange: openInsertMenuMeta.commandRange });
-                }
-
-                // 更新命令范围（用户继续输入）
-                const updateCommandMeta = tr.getMeta('updateInsertMenuCommandRange');
-                if (updateCommandMeta?.commandRange) {
-                    updateState({ insertMenuCommandRange: updateCommandMeta.commandRange });
-                }
-
-                // 清理命令范围（菜单关闭/选择后）
-                const clearCommandMeta = tr.getMeta('clearInsertMenuCommandRange');
-                if (clearCommandMeta) {
-                    updateState({ insertMenuCommandRange: null });
-                }
-
-                // 文档变化时更新节点信息
-                // 注意：即使位置没变，节点类型也可能改变（如 paragraph 被替换成 codeBlock）
-                // 所以需要重新获取节点信息以更新 isEmpty 等属性
-                if (tr.docChanged && currentState.currentNode) {
-                    const newPos = tr.mapping.map(currentState.currentNode.pos);
-                    const view = editor.view;
-                    const nodeInfo = getNodeInfoFromPos(view, newPos);
                     if (nodeInfo) {
-                        updateState({ currentNode: nodeInfo });
+                        nextState = syncCurrentNode(nextState, nodeInfo);
                     } else {
-                        hide();
+                        const hiddenState = hideHandleState(nextState);
+                        if (hiddenState !== nextState) {
+                            emitNodeChange(null);
+                        }
+                        nextState = hiddenState;
                     }
                 }
 
-                // 文档变化时映射命令范围
-                if (tr.docChanged && currentState.insertMenuCommandRange) {
-                    const mappedFrom = tr.mapping.map(currentState.insertMenuCommandRange.from);
-                    const mappedTo = tr.mapping.map(currentState.insertMenuCommandRange.to);
-                    if (mappedFrom >= mappedTo) {
-                        updateState({ insertMenuCommandRange: null });
-                    } else if (
-                        mappedFrom !== currentState.insertMenuCommandRange.from ||
-                        mappedTo !== currentState.insertMenuCommandRange.to
-                    ) {
-                        updateState({ insertMenuCommandRange: { from: mappedFrom, to: mappedTo } });
-                    }
-                }
+                commitState(nextState);
 
                 return currentState;
             },
@@ -354,27 +285,21 @@ export function createDragHandlePlugin({
                         return;
                     }
 
-                    // 文档变化时更新当前节点信息
                     if (!view.state.doc.eq(prevState.doc) && currentState.currentNode) {
-                        // 优先使用选区位置获取节点（更准确，特别是在插入新节点后）
                         const { from } = view.state.selection;
                         let nodeInfo = getNodeInfoFromPos(view, from);
 
-                        // 如果选区位置获取失败，尝试用映射后的原位置
                         if (!nodeInfo) {
-                            const mappedPos = view.state.tr.mapping.map(
-                                currentState.currentNode.pos
-                            );
+                            const mappedPos = view.state.tr.mapping.map(currentState.currentNode.pos);
                             nodeInfo = getNodeInfoFromPos(view, mappedPos);
                         }
 
-                        // 如果还是失败，尝试用原位置
                         if (!nodeInfo) {
                             nodeInfo = getNodeInfoFromPos(view, currentState.currentNode.pos);
                         }
 
                         if (nodeInfo) {
-                            updateState({ currentNode: nodeInfo });
+                            commitState(syncCurrentNode(currentState, nodeInfo));
                         }
                     }
                 },
@@ -384,35 +309,27 @@ export function createDragHandlePlugin({
                         cancelAnimationFrame(rafId);
                         rafId = null;
                     }
-                    if (hideTimeoutId) {
-                        clearTimeout(hideTimeoutId);
-                        hideTimeoutId = null;
+                    pendingMouseMove = null;
+                    cancelScheduledHide();
+                    cancelScheduledShow();
+                    if (dragEnabled) {
+                        document.removeEventListener('dragover', globalDragoverHandler, true);
+                        document.removeEventListener('drop', globalDropHandler, true);
                     }
-                    // 清理全局监听器
-                    document.removeEventListener('dragover', globalDragoverHandler, true);
-                    document.removeEventListener('drop', globalDropHandler, true);
                 },
             };
         },
 
         props: {
             handleTextInput(view, from, to, text) {
-                if (options.insertMenu?.enabled === false) {
+                if (!insertMenuEnabled) {
                     return false;
                 }
+
                 if (!editor.isEditable) {
                     return false;
                 }
 
-                const inputEnabled =
-                    options.insertMenu?.triggerOnInput ??
-                    options.insertMenu?.triggerOnSlash ??
-                    true;
-                if (!inputEnabled) {
-                    return false;
-                }
-
-                // 如果已经由命令打开菜单，继续输入时扩展命令范围（保持输入落入文档）
                 const existingRange = currentState.insertMenuCommandRange;
                 if (existingRange && from === to && from === existingRange.to) {
                     const tr = view.state.tr.insertText(text, from, to);
@@ -427,10 +344,13 @@ export function createDragHandlePlugin({
                 }
 
                 const trigger = options.insertMenu?.trigger ?? '/';
+                if (trigger === false) {
+                    return false;
+                }
+
                 const isTrigger =
                     typeof trigger === 'string' ? text === trigger : (trigger as RegExp).test(text);
 
-                // 仅在空行输入“触发命令”时触发
                 if (!isTrigger || from !== to) {
                     return false;
                 }
@@ -447,7 +367,6 @@ export function createDragHandlePlugin({
                     return false;
                 }
 
-                // 用光标位置作为触发点
                 const coords = view.coordsAtPos(from);
                 const triggerRect = new DOMRect(
                     coords.left,
@@ -457,16 +376,12 @@ export function createDragHandlePlugin({
                 );
 
                 const commandRange = { from, to: from + text.length };
-
-                // 让输入内容落入文档，同时打开菜单
                 const tr = view.state.tr.insertText(text, from, to);
                 tr.setMeta('openInsertMenu', { triggerRect, commandRange, triggerText: text });
                 view.dispatch(tr);
 
-                // 更新 currentNode 供 InsertMenu 使用（不强制显示手柄）
-                updateState({
-                    currentNode: nodeInfo,
-                    isVisible: currentState.isVisible,
+                commitState({
+                    ...syncCurrentNode(currentState, nodeInfo),
                     insertMenuCommandRange: commandRange,
                 });
 
@@ -474,14 +389,30 @@ export function createDragHandlePlugin({
             },
             handleDOMEvents: {
                 mousemove(view, event) {
-                    if (rafId) {
-                        return false;
-                    }
+                    pendingMouseMove = {
+                        view,
+                        x: event.clientX,
+                        y: event.clientY,
+                    };
 
-                    rafId = requestAnimationFrame(() => {
-                        rafId = null;
-                        handleMouseMove(view, event.clientX, event.clientY);
-                    });
+                    if (!rafId) {
+                        rafId = requestAnimationFrame(() => {
+                            const nextMouseMove = pendingMouseMove;
+
+                            rafId = null;
+                            pendingMouseMove = null;
+
+                            if (!nextMouseMove) {
+                                return;
+                            }
+
+                            handleMouseMove(
+                                nextMouseMove.view,
+                                nextMouseMove.x,
+                                nextMouseMove.y
+                            );
+                        });
+                    }
 
                     return false;
                 },
@@ -491,8 +422,6 @@ export function createDragHandlePlugin({
                         return false;
                     }
 
-                    // isInSafeZone 已覆盖节点左侧 100px（手柄区域）+ 垂直范围
-                    // 如果鼠标还在安全区域内，不隐藏
                     if (isInSafeZone(event.clientX, event.clientY)) {
                         return false;
                     }
@@ -506,7 +435,6 @@ export function createDragHandlePlugin({
                         return false;
                     }
 
-                    // 键盘输入时隐藏手柄
                     if (view.hasFocus()) {
                         hide();
                     }
@@ -515,12 +443,15 @@ export function createDragHandlePlugin({
                 },
 
                 dragenter(_view, event) {
+                    if (!dragEnabled || !editor.isEditable) {
+                        return false;
+                    }
+
                     const isDragHandle = event.dataTransfer?.types.includes(DRAG_HANDLE_MIME);
                     if (!isDragHandle) {
                         return false;
                     }
 
-                    // 在 dragenter 时也调用 preventDefault，确保 drop 可以触发
                     event.preventDefault();
                     if (event.dataTransfer) {
                         event.dataTransfer.dropEffect = 'move';
@@ -528,52 +459,63 @@ export function createDragHandlePlugin({
                     return true;
                 },
 
-                dragover(_view, event) {
-                    // 检查是否是我们的拖拽
-                    const isDragHandle = event.dataTransfer?.types.includes(DRAG_HANDLE_MIME);
-                    if (!isDragHandle) {
-                        return false; // 不是我们的拖拽，让其他插件处理
+                dragover(view, event) {
+                    if (!dragEnabled || !editor.isEditable) {
+                        return false;
                     }
 
-                    const target = event.target as Element;
+                    const isDragHandle = event.dataTransfer?.types.includes(DRAG_HANDLE_MIME);
+                    if (!isDragHandle) {
+                        return false;
+                    }
 
-                    // 使用缓存来减少 DOM 检查的开销（只在目标元素变化时重新检查）
+                    const target = event.target as Element | null;
                     let isNonEditable = false;
                     if (target && target !== lastDragoverTarget) {
-                        // 目标元素变化了，重新检查（这里不节流，因为插件层的事件频率可能不同）
-                        isNonEditable = isNonEditableNodeInEditor(target, _view);
-                        // 更新缓存，供全局处理器使用
+                        isNonEditable = isNonEditableNodeInEditor(target, view);
                         lastDragoverTarget = target;
                         lastDragoverResult = isNonEditable;
                     } else if (target === lastDragoverTarget && lastDragoverResult !== null) {
-                        // 使用缓存结果
                         isNonEditable = lastDragoverResult;
                     }
 
-                    // 关键：必须调用 preventDefault 才能触发 drop 事件
+                    if (isNonEditable) {
+                        return false;
+                    }
+
                     event.preventDefault();
                     if (event.dataTransfer) {
                         event.dataTransfer.dropEffect = 'move';
                     }
-                    return true; // 消费事件
+                    return true;
                 },
 
-                dragleave(_view, _event) {
-                    // dragleave 事件无需特殊处理
+                dragleave() {
                     return false;
                 },
 
                 drop(_view, event) {
-                    updateState({ isDragging: false });
+                    if (!dragEnabled || !editor.isEditable) {
+                        return false;
+                    }
 
-                    // 调用 handleDrop 处理拖拽放置
+                    if (currentState.isDragging) {
+                        commitState({
+                            ...currentState,
+                            isDragging: false,
+                        });
+                    }
+
                     return handleDrop(editor, event, null);
                 },
 
                 dragend(_view, event) {
+                    if (!dragEnabled || !editor.isEditable) {
+                        return false;
+                    }
+
                     const isDragHandle = event.dataTransfer?.types.includes(DRAG_HANDLE_MIME);
                     if (isDragHandle) {
-                        // 重置缓存
                         lastDragoverTarget = null;
                         lastDragoverResult = null;
                     }
@@ -584,30 +526,18 @@ export function createDragHandlePlugin({
     });
 }
 
-/**
- * 锁定拖拽手柄
- */
 export function lockDragHandle(editor: Editor, locked: boolean): void {
     editor.view.dispatch(editor.view.state.tr.setMeta('lockDragHandle', locked));
 }
 
-/**
- * 隐藏拖拽手柄
- */
 export function hideDragHandle(editor: Editor): void {
     editor.view.dispatch(editor.view.state.tr.setMeta('hideDragHandle', true));
 }
 
-/**
- * 取消已安排的隐藏（例如鼠标悬停到抓手时）
- */
 export function cancelHideDragHandle(editor: Editor): void {
     editor.view.dispatch(editor.view.state.tr.setMeta('cancelDragHandleHide', true));
 }
 
-/**
- * 重新安排隐藏（例如鼠标离开抓手时）
- */
 export function scheduleHideDragHandle(editor: Editor): void {
     editor.view.dispatch(editor.view.state.tr.setMeta('scheduleDragHandleHide', true));
 }

@@ -1,13 +1,16 @@
 {
     "name": "@tiptap-codeless/extension-drag-handle",
     "version": "0.1.1",
-    "description": "Drag handle extension with insert functionality for Tiptap, similar to Feishu docs",
+    "description": "Tiptap drag handle and slash insert menu extension with customizable items, React UI, and built-in i18n",
     "keywords": [
         "tiptap",
         "editor",
         "drag-handle",
         "insert",
-        "react"
+        "react",
+        "slash-command",
+        "block-editor",
+        "i18n"
     ],
     "author": "namelesserlx (https://github.com/namelesserlx)",
     "license": "MIT",
@@ -30,21 +33,22 @@
     },
     "files": [
         "dist",
-        "README.md"
+        "README.md",
+        "README.zh-CN.md"
     ],
     "scripts": {
         "dev": "tsc && vite build --watch",
-        "build": "vite build && tsc",
+        "build": "rm -rf dist && vite build && node ../../scripts/bundle-dts.mjs --project tsconfig.json --entry src/index.ts --output dist/index.d.ts --external-import @tiptap-codeless/core --append-declaration src/types/tiptap-starter-kit-commands.ts",
         "type-check": "tsc --noEmit",
-        "lint": "eslint src",
+        "lint": "eslint src test",
         "clean": "rm -rf dist",
         "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
     },
     "dependencies": {
         "@tiptap-codeless/core": "workspace:*",
-        "@tiptap/core": "^3.13.0",
-        "@tiptap/pm": "^3.13.0",
-        "@tiptap/react": "^3.13.0",
+        "@tiptap/core": "^3.22.4",
+        "@tiptap/pm": "^3.22.4",
+        "@tiptap/react": "^3.22.4",
         "classnames": "^2.5.1"
     },
     "devDependencies": {

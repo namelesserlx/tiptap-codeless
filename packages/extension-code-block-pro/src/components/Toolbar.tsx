@@ -14,7 +14,7 @@ import { useConfigContext, useMermaidContext, useStateContext } from '@/contexts
 import { useCopy } from '@/hooks/useCopy';
 import { useClickOutside } from '@tiptap-codeless/core';
 import classNames from 'classnames';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 export interface ToolbarProps {
     /**
@@ -28,15 +28,16 @@ export interface ToolbarProps {
  */
 export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
     const {
-        nodeAttrs,
         options,
-        updateAttributes,
+        messages,
+        isEditable,
+        showMermaidDiagram,
+        toggleMermaidDiagram,
         currentLanguage,
         languages,
         changeLanguage,
         getCodeContent,
-        getBodyHeight,
-        diagramFromHeightRef,
+        wrapperRef,
     } = useConfigContext();
 
     const { showLineNumbers, toggleLineNumbers } = useStateContext();
@@ -45,7 +46,6 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
 
     // 复制逻辑（仅在此组件使用）
     const { copyState, copy } = useCopy();
-    const showMermaidDiagram = nodeAttrs.showMermaidDiagram ?? false;
 
     // 处理复制（仅在此组件使用）
     const handleCopy = useCallback(() => {
@@ -55,27 +55,35 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
         }
     }, [getCodeContent, copy]);
 
-    // 处理 Mermaid 图表切换：切到图表前写入当前 body 高度，图表从该高度平滑展开
-    const toggleMermaidDiagram = useCallback(() => {
-        const newValue = !showMermaidDiagram;
-        if (newValue) diagramFromHeightRef.current = getBodyHeight();
-        updateAttributes({ showMermaidDiagram: newValue });
-    }, [showMermaidDiagram, updateAttributes, getBodyHeight, diagramFromHeightRef]);
-
     const {
-        showLanguageSelector = true,
-        showCopyButton = true,
-        showLineNumbersToggle = true,
+        language: showLanguageSelector = true,
+        copy: showCopyButton = true,
+        lineNumbers: showLineNumbersToggle = true,
     } = options.toolbar || {};
 
     const showMermaidToggle = isMermaid;
-    const showLineNumbersToggleButton = showLineNumbersToggle && options.lineNumbers?.toggleable;
+    const showLineNumbersToggleButton = showLineNumbersToggle && options.lineNumbers?.allowToggle;
     const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
+    const isLanguageDropdownVisible = isEditable && isLanguageDropdownOpen;
+    const dropdownZIndex = options.ui?.layers?.languageDropdown ?? 1000;
 
     // 点击外部关闭下拉菜单
     const dropdownRef = useClickOutside<HTMLDivElement>(() => {
         setIsLanguageDropdownOpen(false);
-    }, isLanguageDropdownOpen);
+    }, isLanguageDropdownVisible);
+
+    useEffect(() => {
+        const wrapper = wrapperRef.current;
+        if (!wrapper) {
+            return;
+        }
+
+        wrapper.classList.toggle('is-language-dropdown-open', isLanguageDropdownVisible);
+
+        return () => {
+            wrapper.classList.remove('is-language-dropdown-open');
+        };
+    }, [isLanguageDropdownVisible, wrapperRef]);
 
     // 处理语言选择
     const handleLanguageSelect = (language: string) => {
@@ -91,9 +99,12 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
                     <button
                         type="button"
                         className="language-button"
-                        onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
-                        aria-label="选择编程语言"
-                        aria-expanded={isLanguageDropdownOpen}
+                        onClick={() => {
+                            if (isEditable) setIsLanguageDropdownOpen(!isLanguageDropdownOpen);
+                        }}
+                        disabled={!isEditable}
+                        aria-label={messages.toolbar.selectLanguage}
+                        aria-expanded={isLanguageDropdownVisible}
                     >
                         <span className="language-label">{currentLanguage.label}</span>
                         <ChevronDownIcon
@@ -104,8 +115,8 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
                         />
                     </button>
 
-                    {isLanguageDropdownOpen && (
-                        <div className="language-dropdown">
+                    {isLanguageDropdownVisible && (
+                        <div className="language-dropdown" style={{ zIndex: dropdownZIndex }}>
                             <div className="language-list">
                                 {languages.map((lang) => (
                                     <button
@@ -133,8 +144,16 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
                         active: showLineNumbers,
                     })}
                     onClick={toggleLineNumbers}
-                    title={showLineNumbers ? '隐藏行号' : '显示行号'}
-                    aria-label={showLineNumbers ? '隐藏行号' : '显示行号'}
+                    title={
+                        showLineNumbers
+                            ? messages.toolbar.hideLineNumbers
+                            : messages.toolbar.showLineNumbers
+                    }
+                    aria-label={
+                        showLineNumbers
+                            ? messages.toolbar.hideLineNumbers
+                            : messages.toolbar.showLineNumbers
+                    }
                 >
                     <LineNumbersIcon />
                 </button>
@@ -148,8 +167,12 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
                         active: showMermaidDiagram,
                     })}
                     onClick={toggleMermaidDiagram}
-                    title={showMermaidDiagram ? '显示代码' : '显示图表'}
-                    aria-label={showMermaidDiagram ? '显示代码' : '显示图表'}
+                    title={
+                        showMermaidDiagram ? messages.toolbar.showCode : messages.toolbar.showDiagram
+                    }
+                    aria-label={
+                        showMermaidDiagram ? messages.toolbar.showCode : messages.toolbar.showDiagram
+                    }
                 >
                     {showMermaidDiagram ? <CodeIcon /> : <MermaidDiagramIcon />}
                 </button>
@@ -165,8 +188,8 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
                     })}
                     onClick={handleCopy}
                     disabled={copyState === 'copying'}
-                    title="复制代码"
-                    aria-label="复制代码"
+                    title={messages.toolbar.copyCode}
+                    aria-label={messages.toolbar.copyCode}
                 >
                     {copyState === 'success' ? <CopySuccessIcon /> : <CopyIcon />}
                 </button>

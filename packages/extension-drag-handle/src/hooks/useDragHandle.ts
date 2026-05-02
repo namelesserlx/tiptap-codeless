@@ -7,6 +7,7 @@ import type { Editor } from '@tiptap/core';
 import { useCallback, useEffect, useState } from 'react';
 import { dragHandlePluginKey } from '../extension/DragHandlePlugin';
 import type { CurrentNodeInfo, DragHandlePluginState } from '../types';
+import { areNodeInfosEqual } from '../utils/rect';
 
 export interface UseDragHandleReturn {
     /** 当前节点信息 */
@@ -27,6 +28,20 @@ export interface UseDragHandleReturn {
     hide: () => void;
 }
 
+function arePluginStatesEqual(
+    previousState: DragHandlePluginState,
+    nextState: DragHandlePluginState
+): boolean {
+    return (
+        previousState.locked === nextState.locked &&
+        previousState.isDragging === nextState.isDragging &&
+        previousState.isVisible === nextState.isVisible &&
+        areNodeInfosEqual(previousState.currentNode, nextState.currentNode) &&
+        previousState.insertMenuCommandRange?.from === nextState.insertMenuCommandRange?.from &&
+        previousState.insertMenuCommandRange?.to === nextState.insertMenuCommandRange?.to
+    );
+}
+
 /**
  * 拖拽手柄状态管理 Hook
  */
@@ -45,7 +60,9 @@ export function useDragHandle(editor: Editor | null): UseDragHandleReturn {
         const updateState = () => {
             const pluginState = dragHandlePluginKey.getState(editor.state);
             if (pluginState) {
-                setState(pluginState);
+                setState((previousState) =>
+                    arePluginStatesEqual(previousState, pluginState) ? previousState : pluginState
+                );
             }
         };
 

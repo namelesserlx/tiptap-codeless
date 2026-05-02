@@ -5,9 +5,15 @@ interface TooltipProps {
     content: string;
     children: React.ReactNode;
     className?: string;
+    portalTarget?: HTMLElement | null;
 }
 
-export const Tooltip: React.FC<TooltipProps> = ({ content, children, className }) => {
+export const Tooltip: React.FC<TooltipProps> = ({
+    content,
+    children,
+    className,
+    portalTarget,
+}) => {
     const [visible, setVisible] = useState(false);
     const [position, setPosition] = useState({ top: 0, left: 0 });
     const triggerRef = useRef<HTMLDivElement>(null);
@@ -46,7 +52,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, children, className }
                     >
                         {content}
                     </div>,
-                    document.body
+                    portalTarget ?? document.body
                 )}
         </div>
     );

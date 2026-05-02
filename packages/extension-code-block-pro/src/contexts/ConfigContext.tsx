@@ -3,6 +3,7 @@
  */
 
 import React, { createContext, useContext } from 'react';
+import type { CodeBlockProMessages } from '@/i18n';
 import type {
     CodeBlockAttributes,
     CodeBlockProOptions,
@@ -32,9 +33,29 @@ export interface ConfigContextValue {
     theme: CodeBlockTheme;
 
     /**
+     * 解析后的国际化文案
+     */
+    messages: CodeBlockProMessages;
+
+    /**
      * 更新节点属性
      */
     updateAttributes: (attrs: Partial<CodeBlockAttributes>) => void;
+
+    /**
+     * 当前编辑器是否可编辑
+     */
+    isEditable: boolean;
+
+    /**
+     * 是否显示 Mermaid 图表查看态
+     */
+    showMermaidDiagram: boolean;
+
+    /**
+     * 切换 Mermaid 图表查看态
+     */
+    toggleMermaidDiagram: () => void;
 
     /**
      * 删除节点

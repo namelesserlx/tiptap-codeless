@@ -28,7 +28,7 @@ export interface CoreViteConfigOptions {
 }
 
 /**
- * core 包统一的 Vite 配置：ESM + CJS 双格式、external 依赖、sourcemap。
+ * core 包统一的 Vite 配置：ESM + CJS 双格式、external 依赖、最小化产物。
  */
 export function createCoreViteConfig(options: CoreViteConfigOptions): UserConfig {
     const { name, entry } = options;
@@ -47,8 +47,8 @@ export function createCoreViteConfig(options: CoreViteConfigOptions): UserConfig
                     globals: CORE_GLOBALS,
                 },
             },
-            sourcemap: true,
-            minify: false,
+            sourcemap: false,
+            minify: 'esbuild',
             esbuild: {
                 drop: ['console', 'debugger'],
             },

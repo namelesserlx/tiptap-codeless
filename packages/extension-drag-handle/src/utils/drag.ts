@@ -19,14 +19,13 @@ const PREVIEW_STYLES = {
     background: 'rgba(24, 144, 255, 0.1)',
     borderRadius: '4px',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-    opacity: '0.5',
 } as const;
 
 /**
  * 创建图片节点的 Canvas 预览
  * 使用 Canvas 直接绘制已加载的图片，避免 blob URL 重新加载问题
  */
-function createImagePreview(img: HTMLImageElement): HTMLCanvasElement {
+function createImagePreview(img: HTMLImageElement, opacity: number): HTMLCanvasElement {
     const rect = img.getBoundingClientRect();
     const canvas = document.createElement('canvas');
     canvas.width = rect.width;
@@ -36,7 +35,7 @@ function createImagePreview(img: HTMLImageElement): HTMLCanvasElement {
     if (ctx) {
         ctx.fillStyle = PREVIEW_STYLES.background;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.globalAlpha = 0.5;
+        ctx.globalAlpha = opacity;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     }
 
@@ -54,7 +53,7 @@ function createImagePreview(img: HTMLImageElement): HTMLCanvasElement {
 /**
  * 创建普通节点的 DOM 克隆预览
  */
-function createDOMPreview(domNode: HTMLElement): HTMLElement {
+function createDOMPreview(domNode: HTMLElement, opacity: number): HTMLElement {
     const rect = domNode.getBoundingClientRect();
     const clone = domNode.cloneNode(true) as HTMLElement;
 
@@ -62,7 +61,7 @@ function createDOMPreview(domNode: HTMLElement): HTMLElement {
         position: 'absolute',
         top: '-9999px',
         left: '-9999px',
-        opacity: PREVIEW_STYLES.opacity,
+        opacity: `${opacity}`,
         pointerEvents: 'none',
         width: `${rect.width}px`,
         height: `${rect.height}px`,
@@ -79,12 +78,12 @@ function createDOMPreview(domNode: HTMLElement): HTMLElement {
  * 创建拖拽预览元素
  * 根据节点类型选择最佳的预览方式
  */
-function createDragPreview(domNode: HTMLElement): HTMLElement {
+function createDragPreview(domNode: HTMLElement, opacity: number): HTMLElement {
     // 检查是否包含已加载的图片
     const img = domNode.querySelector('img') as HTMLImageElement | null;
     const isImageLoaded = img?.complete && img.naturalWidth > 0;
 
-    return isImageLoaded ? createImagePreview(img) : createDOMPreview(domNode);
+    return isImageLoaded ? createImagePreview(img, opacity) : createDOMPreview(domNode, opacity);
 }
 
 /**
@@ -110,11 +109,17 @@ function setDragTransferData(
 /**
  * 开始拖拽节点
  */
-export function startDragNode(editor: Editor, nodeInfo: CurrentNodeInfo, event: DragEvent): void {
+export function startDragNode(
+    editor: Editor,
+    nodeInfo: CurrentNodeInfo,
+    event: DragEvent,
+    opacity = 0.5
+): void {
     const { pos, dom: domNode } = nodeInfo;
     const { view } = editor;
     const { dataTransfer } = event;
 
+    if (!editor.isEditable) return;
     if (!dataTransfer) return;
 
     // 1. 创建节点选区
@@ -132,7 +137,7 @@ export function startDragNode(editor: Editor, nodeInfo: CurrentNodeInfo, event: 
             y: event.clientY - rect.top,
         };
 
-        const preview = createDragPreview(domNode);
+        const preview = createDragPreview(domNode, opacity);
         document.body.appendChild(preview);
         dataTransfer.setDragImage(preview, offset.x, offset.y);
 
@@ -160,7 +165,7 @@ export function handleDrop(
     }
 
     if (!editor.isEditable) {
-        return true;
+        return false;
     }
 
     const dt = event.dataTransfer;
@@ -240,6 +245,10 @@ export function handleDrop(
  * 删除节点
  */
 export function deleteNode(editor: Editor, pos: number): boolean {
+    if (!editor.isEditable) {
+        return false;
+    }
+
     const { view } = editor;
     const { state } = view;
 
@@ -263,6 +272,10 @@ export function deleteNode(editor: Editor, pos: number): boolean {
  * 移动节点到新位置
  */
 export function moveNode(editor: Editor, fromPos: number, toPos: number): boolean {
+    if (!editor.isEditable) {
+        return false;
+    }
+
     const { view } = editor;
     const { state } = view;
 
@@ -299,6 +312,10 @@ export function moveNode(editor: Editor, fromPos: number, toPos: number): boolea
  * 复制节点
  */
 export function duplicateNode(editor: Editor, pos: number): boolean {
+    if (!editor.isEditable) {
+        return false;
+    }
+
     const { view } = editor;
     const { state } = view;
 

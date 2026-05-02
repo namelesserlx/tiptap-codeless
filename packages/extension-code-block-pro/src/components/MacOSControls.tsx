@@ -13,60 +13,72 @@ export interface MacOSControlsProps {
  * MacOS 控制按钮组件
  */
 export const MacOSControls: React.FC<MacOSControlsProps> = React.memo(({ className }) => {
-    const { options, deleteNode, getPos } = useConfigContext();
+    const { options, messages, isEditable, deleteNode, getPos } = useConfigContext();
 
     const { isCollapsed, isFullscreen, isCollapsible, toggleCollapse, handleFullscreen } =
         useStateContext();
 
     const {
-        showClose = true,
-        showCollapse = true,
-        showFullscreen = true,
-    } = options.macosControls || {};
+        close = true,
+        collapse = true,
+        fullscreen = true,
+    } = options.windowControls || {};
     // 处理关闭（仅在此组件使用）
     const handleClose = useCallback(() => {
         if (deleteNode) {
             deleteNode();
-        } else if (options.macosControls?.onClose) {
+        } else if (options.windowControls?.onClose) {
             // 这里不再传完整 node，只能传位置；如需 node，可在外部通过 getPos 重新获取
-            options.macosControls.onClose?.(undefined, getPos());
+            options.windowControls.onClose?.(undefined, getPos());
         }
-    }, [deleteNode, options.macosControls, getPos]);
+    }, [deleteNode, options.windowControls, getPos]);
     return (
         <div className={classNames('macos-controls', className)}>
-            {showClose && (
+            {close && isEditable && (
                 <button
                     type="button"
                     className="control-button close"
                     onClick={handleClose}
-                    title="关闭"
-                    aria-label="关闭代码块"
+                    title={messages.controls.close}
+                    aria-label={messages.controls.closeCodeBlock}
                 >
                     <span className="control-dot red" />
                 </button>
             )}
 
-            {showCollapse && isCollapsible && (
+            {collapse && isCollapsible && (
                 <button
                     type="button"
                     className={classNames('control-button collapse', {
                         'is-collapsed': isCollapsed,
                     })}
                     onClick={toggleCollapse}
-                    title={isCollapsed ? '展开' : '折叠'}
-                    aria-label={isCollapsed ? '展开代码块' : '折叠代码块'}
+                    title={isCollapsed ? messages.controls.expand : messages.controls.collapse}
+                    aria-label={
+                        isCollapsed
+                            ? messages.controls.expandCodeBlock
+                            : messages.controls.collapseCodeBlock
+                    }
                 >
                     <span className="control-dot yellow" />
                 </button>
             )}
 
-            {showFullscreen && (
+            {fullscreen && (
                 <button
                     type="button"
                     className="control-button fullscreen"
                     onClick={handleFullscreen}
-                    title={isFullscreen ? '退出全屏' : '全屏'}
-                    aria-label={isFullscreen ? '退出全屏模式' : '全屏显示代码块'}
+                    title={
+                        isFullscreen
+                            ? messages.controls.exitFullscreen
+                            : messages.controls.fullscreen
+                    }
+                    aria-label={
+                        isFullscreen
+                            ? messages.controls.exitFullscreenCodeBlock
+                            : messages.controls.fullscreenCodeBlock
+                    }
                 >
                     <span className="control-dot green" />
                 </button>

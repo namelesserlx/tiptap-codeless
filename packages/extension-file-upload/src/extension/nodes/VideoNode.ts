@@ -5,8 +5,12 @@ import { ReactNodeViewRenderer } from '@tiptap/react';
 export type UploadVideoAttrs = {
     src: string;
     title?: string | null;
+    fileName?: string | null;
+    mimeType?: string | null;
     width?: number | null;
     height?: number | null;
+    storageMode?: string | null;
+    storageKey?: string | null;
 };
 
 export const UploadVideo = Node.create({
@@ -22,8 +26,12 @@ export const UploadVideo = Node.create({
         return {
             src: { default: null },
             title: { default: null },
+            fileName: { default: null },
+            mimeType: { default: null },
             width: { default: null },
             height: { default: null },
+            storageMode: { default: null },
+            storageKey: { default: null },
         };
     },
 
@@ -42,8 +50,12 @@ export const UploadVideo = Node.create({
                     return {
                         src,
                         title: element.getAttribute('title'),
+                        fileName: element.getAttribute('data-file-name'),
+                        mimeType: element.getAttribute('data-mime-type'),
                         width: Number.isFinite(width) ? width : null,
                         height: Number.isFinite(height) ? height : null,
+                        storageMode: element.getAttribute('data-storage-mode'),
+                        storageKey: element.getAttribute('data-storage-key'),
                     };
                 },
             },
@@ -51,7 +63,8 @@ export const UploadVideo = Node.create({
     },
 
     renderHTML({ HTMLAttributes }) {
-        const { width, height } = HTMLAttributes as UploadVideoAttrs;
+        const { width, height, fileName, mimeType, storageMode, storageKey } =
+            HTMLAttributes as UploadVideoAttrs;
         return [
             'video',
             {
@@ -60,6 +73,10 @@ export const UploadVideo = Node.create({
                 controls: 'true',
                 ...(width ? { width } : {}),
                 ...(height ? { height } : {}),
+                ...(fileName ? { 'data-file-name': fileName } : {}),
+                ...(mimeType ? { 'data-mime-type': mimeType } : {}),
+                ...(storageMode ? { 'data-storage-mode': storageMode } : {}),
+                ...(storageKey ? { 'data-storage-key': storageKey } : {}),
             },
             ['source', { src: HTMLAttributes.src }],
         ];

@@ -27,29 +27,44 @@ export interface UseCollapseOptions {
 export function useCollapse(options: UseCollapseOptions = {}) {
     const { defaultCollapsed = false, collapsedLines = 3, onCollapsedChange } = options;
 
-    // 使用函数式初始化，只在首次渲染时设置值
-    const [isCollapsed, setIsCollapsed] = useState(() => defaultCollapsed);
+    const [collapsedState, setCollapsedState] = useState(() => ({
+        source: defaultCollapsed,
+        value: defaultCollapsed,
+    }));
+    const isCollapsed =
+        collapsedState.source === defaultCollapsed ? collapsedState.value : defaultCollapsed;
 
     // 切换折叠状态
     const toggle = useCallback(() => {
-        setIsCollapsed((prev) => {
-            const newValue = !prev;
+        setCollapsedState((current) => {
+            const currentValue =
+                current.source === defaultCollapsed ? current.value : defaultCollapsed;
+            const newValue = !currentValue;
             onCollapsedChange?.(newValue);
-            return newValue;
+            return {
+                source: defaultCollapsed,
+                value: newValue,
+            };
         });
-    }, [onCollapsedChange]);
+    }, [defaultCollapsed, onCollapsedChange]);
 
     // 展开
     const expand = useCallback(() => {
-        setIsCollapsed(false);
+        setCollapsedState({
+            source: defaultCollapsed,
+            value: false,
+        });
         onCollapsedChange?.(false);
-    }, [onCollapsedChange]);
+    }, [defaultCollapsed, onCollapsedChange]);
 
     // 折叠
     const collapse = useCallback(() => {
-        setIsCollapsed(true);
+        setCollapsedState({
+            source: defaultCollapsed,
+            value: true,
+        });
         onCollapsedChange?.(true);
-    }, [onCollapsedChange]);
+    }, [defaultCollapsed, onCollapsedChange]);
 
     return {
         isCollapsed,

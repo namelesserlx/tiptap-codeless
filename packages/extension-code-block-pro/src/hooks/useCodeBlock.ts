@@ -2,7 +2,6 @@
  * 代码块核心逻辑 Hook
  */
 
-import { extractTextFromElement } from '@tiptap-codeless/core';
 import { useCallback, useMemo, useRef } from 'react';
 import type { LanguageConfig } from '@/types';
 
@@ -18,6 +17,11 @@ export interface UseCodeBlockOptions {
     languages?: LanguageConfig[];
 
     /**
+     * 当前代码内容
+     */
+    content?: string;
+
+    /**
      * 语言变化回调
      */
     onLanguageChange?: (language: string) => void;
@@ -27,7 +31,7 @@ export interface UseCodeBlockOptions {
  * 代码块核心逻辑 Hook
  */
 export function useCodeBlock(options: UseCodeBlockOptions) {
-    const { language, languages = [], onLanguageChange } = options;
+    const { language, languages = [], content = '', onLanguageChange } = options;
 
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -40,21 +44,7 @@ export function useCodeBlock(options: UseCodeBlockOptions) {
     }, [language, languages]);
 
     // 获取代码内容
-    const getCodeContent = useCallback((): string => {
-        if (!contentRef.current) return '';
-
-        // 尝试多种方式获取代码内容
-        const selectors = [
-            '[data-node-view-content]',
-            '.code-content pre',
-            '.code-content code',
-            'pre code',
-            'pre',
-        ];
-
-        const text = extractTextFromElement(contentRef.current, selectors);
-        return text;
-    }, []);
+    const getCodeContent = useCallback((): string => content, [content]);
 
     // 更改语言
     const changeLanguage = useCallback(

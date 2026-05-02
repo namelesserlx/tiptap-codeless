@@ -5,7 +5,7 @@ import { LineNumbers } from '@/components/LineNumbers';
 import { MermaidDiagram } from '@/components/MermaidDiagram';
 
 export const CodeBlockBody: React.FC = () => {
-    const { nodeAttrs, options, theme, contentRef, getCodeContent, diagramFromHeightRef } =
+    const { options, theme, contentRef, getCodeContent, diagramFromHeightRef, showMermaidDiagram } =
         useConfigContext();
 
     const { isCollapsed, showLineNumbers, collapsedLines } = useStateContext();
@@ -13,8 +13,7 @@ export const CodeBlockBody: React.FC = () => {
     const { isMermaid, isShowingMermaidDiagram } = useMermaidContext();
 
     const content = getCodeContent();
-    const startLine = options.lineNumbers?.startLine ?? 1;
-    const showMermaidDiagram = nodeAttrs.showMermaidDiagram ?? false;
+    const startLine = options.lineNumbers?.start ?? 1;
     if (isShowingMermaidDiagram) {
         return (
             <MermaidDiagram

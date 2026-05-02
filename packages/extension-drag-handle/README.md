@@ -3,7 +3,9 @@
 Drag handle extension for Tiptap: drag to reorder blocks, insert menu.
 
 - [English](README.md) (Current)
-- [中文](README.zh.md)
+- [中文](https://github.com/namelesserlx/tiptap-codeless/blob/main/packages/extension-drag-handle/README.zh-CN.md)
+- [繁體中文](../../README.zh-TW.md)
+- [日本語](../../README.ja.md)
 
 ---
 
@@ -41,7 +43,8 @@ const editor = useEditor({
     extensions: [
         StarterKit,
         DragHandle.configure({
-            insertMenu: { enabled: true, triggerOnSlash: true },
+            locale: 'en',
+            insertMenu: { enabled: true, trigger: '/' },
             drag: { enabled: true },
         }),
     ],
@@ -56,32 +59,84 @@ function App() {
 
 ## ⚙️ Configuration Options
 
+### Shared i18n options
+
+```ts
+DragHandle.configure({
+    locale: 'ja',
+    messages: {
+        insertMenu: {
+            groups: {
+                basic: '基本',
+            },
+        },
+    },
+    insertMenu: {
+        zIndex: 2400,
+    },
+});
+```
+
+### Handle icon customization
+
+```tsx
+DragHandle.configure({
+    handle: {
+        icons: {
+            insert: <PlusCircleIcon />,
+            drag: <GripVerticalIcon />,
+        },
+    },
+});
+```
+
 | Option             | Type                                                                     | Default                               | Description                                   |
 | ------------------ | ------------------------------------------------------------------------ | ------------------------------------- | --------------------------------------------- |
+| `locale`           | `'zh-CN' \| 'zh-TW' \| 'en' \| 'ja'`                                     | `'zh-CN'`                             | Built-in UI locale                            |
+| `messages`         | `DeepPartial<DragHandleMessages>`                                        | `{}`                                  | Override built-in menu labels                 |
 | `offset`           | `{ x?: number; y?: number }`                                             | `{ x: -32, y: 0 }`                    | Handle position offset from block             |
+| `handle`           | `{ width?, height?, hoverDelay?, hideDelay?, zIndex?, iconSize?, icons? }` | `{ width: 24, height: 24, ... }`    | Handle size, timing, and optional custom icons |
 | `insertMenu`       | `InsertMenuConfig`                                                       | see below                             | Insert menu and slash trigger                 |
-| `drag`             | `{ enabled?: boolean; dragOpacity?: number }`                            | `{ enabled: true, dragOpacity: 0.5 }` | Drag behavior                                 |
-| `handleStyle`      | `{ width?, height?, hoverDelay?, hideDelay?, zIndex?, iconSize? }`       | `{ width: 24, height: 24, ... }`      | Handle size and show/hide timing              |
-| `excludeNodes`     | `string[]`                                                               | `[]`                                  | Node types that do not show the handle        |
-| `includeOnlyNodes` | `string[]`                                                               | `undefined`                           | If set, only these node types show the handle |
-| `element`          | `{ insert?: ReactNode \| HTMLElement; drag?: ReactNode \| HTMLElement }` | -                                     | Custom handle elements                        |
-| `onDragStart`      | `(info, event) => void`                                                  | -                                     | Callback when drag starts                     |
-| `onDragEnd`        | `(info \| null, event) => void`                                          | -                                     | Callback when drag ends                       |
-| `onNodeChange`     | `(info \| null) => void`                                                 | -                                     | Callback when current node changes            |
-| `onInsertClick`    | `(info, event) => void`                                                  | -                                     | Callback when insert button is clicked        |
+| `drag`             | `{ enabled?: boolean; opacity?: number }`                                | `{ enabled: true, opacity: 0.5 }`     | Drag behavior                                 |
+| `nodes`            | `{ include?: string[]; exclude?: string[] }`                             | `{ include: undefined, exclude: [] }` | Node visibility rules                         |
+| `events`           | `{ onDragStart?, onDragEnd?, onNodeChange?, onInsertClick? }`            | `{}`                                  | Runtime lifecycle callbacks                   |
 
 ### Insert menu config
 
 | Option           | Type                                    | Default     | Description                                                  |
 | ---------------- | --------------------------------------- | ----------- | ------------------------------------------------------------ |
-| `enabled`        | `boolean`                               | `true`      | Enable insert menu                                           |
-| `triggerOnInput` | `boolean`                               | -           | Open menu on input (e.g. when block is empty)                |
-| `trigger`        | `string \| RegExp`                      | -           | Trigger text (e.g. `'/'`) or pattern                         |
-| `triggerOnSlash` | `boolean`                               | `true`      | Deprecated: use `triggerOnInput` + `trigger`                 |
+| `enabled`        | `boolean`                               | `true`      | Enable the insert menu UI. When `false`, both the insert handle and slash trigger are disabled |
+| `trigger`        | `string \| RegExp \| false`             | `'/'`       | Trigger text or pattern. Use `false` to disable slash-triggered opening while keeping the insert handle |
 | `items`          | `(InsertMenuItem \| InsertMenuGroup)[]` | -           | Menu items or groups                                         |
-| `itemsMode`      | `'replace' \| 'merge'`                  | `'replace'` | `replace`: use only your items; `merge`: merge with defaults |
-| `custom`         | `ComponentType<InsertMenuProps>`        | -           | Custom menu component                                        |
-| `position`       | `{ placement?; offset? }`               | -           | Menu placement: `right` \| `left` \| `bottom` \| `top`       |
+| `strategy`       | `'replace' \| 'merge'`                  | `'replace'` | `replace`: use only your items; `merge`: merge with defaults |
+| `component`      | `ComponentType<InsertMenuProps>`        | -           | Custom menu component                                        |
+| `placement`      | `'right' \| 'left' \| 'bottom' \| 'top'` | `'left'`    | Preferred menu placement                                     |
+| `offset`         | `{ x?: number; y?: number }`            | `{ x: 0, y: 0 }` | Extra menu offset in pixels                              |
+| `zIndex`         | `number`                                | `1000`      | Insert menu stacking order                                   |
+
+---
+
+## 🔒 Read-only Mode
+
+`DragHandle` follows Tiptap's editor-level read-only state. You don't need a separate `readonly` option in this extension.
+
+```tsx
+const editor = useEditor({
+    editable: false,
+    extensions: [StarterKit, DragHandle],
+});
+
+// Toggle later
+editor?.setEditable(false);
+editor?.setEditable(true);
+```
+
+When the editor is read-only:
+
+- Drag handles are hidden/disabled and block reordering is not allowed.
+- Drag/drop handlers return no-op / `false`.
+- Slash-triggered insert menu and insert-handle actions are disabled because they would modify the document.
+- Integration commands such as `lockDragHandle`, `unlockDragHandle`, and `hideDragHandle` are safe to call; they only affect handle UI state.
 
 ---
 
@@ -128,10 +183,9 @@ DragHandle.configure({
     insertMenu: {
         enabled: true,
         trigger: '/',
-        triggerOnInput: true,
-        itemsMode: 'merge', // merge with default items
+        strategy: 'merge', // merge with default items
         items: customItems,
-        position: { placement: 'right' },
+        placement: 'right',
     },
 });
 ```
@@ -144,26 +198,30 @@ All configuration options are typed via `DragHandleOptions`. Example:
 
 ```ts
 DragHandle.configure({
+    locale: 'en',
     offset: { x: -32, y: 0 },
+    handle: {
+        width: 24,
+        height: 24,
+        hoverDelay: 0,
+        hideDelay: 100,
+        icons: {},
+    },
     insertMenu: {
         enabled: true,
-        triggerOnInput: true,
         trigger: '/',
-        position: { placement: 'right' },
-        itemsMode: 'merge',
+        placement: 'right',
+        strategy: 'merge',
         items: customItems,
+        zIndex: 2400,
     },
     drag: {
         enabled: true,
-        dragOpacity: 0.5,
+        opacity: 0.5,
     },
-    handleStyle: {
-        width: 24,
-        height: 24,
-        hoverDelay: 50,
-        hideDelay: 100,
+    nodes: {
+        exclude: [],
     },
-    excludeNodes: [],
 });
 ```
 

@@ -2,12 +2,13 @@ import type { Transaction } from '@tiptap/pm/state';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CodeIcon, DividerIcon, ListIcon, ParagraphIcon, QuoteIcon } from '../components/Icons';
 import { lockDragHandle } from '../extension/DragHandlePlugin';
-import type { InsertMenuGroup, InsertMenuItem } from '../types';
+import { resolveDragHandleMessages } from '../i18n';
+import type { InsertMenuGroup, InsertMenuItem, InsertMenuProps, MenuPlacement } from '../types';
 import { useDragHandleContext } from './DragHandleContext';
 
 /** 菜单位置配置类型 */
 export interface InsertMenuPositionConfig {
-    placement?: 'right' | 'left' | 'bottom' | 'top';
+    placement?: MenuPlacement;
     offset?: { x?: number; y?: number };
 }
 
@@ -16,100 +17,106 @@ export interface InsertMenuPositionConfig {
 /**
  * 默认菜单项
  */
-export const defaultInsertMenuItems: (InsertMenuItem | InsertMenuGroup)[] = [
-    {
-        id: 'basic',
-        title: '基础',
-        items: [
-            {
-                id: 'heading1',
-                label: '标题 1',
-                icon: <div style={{ fontSize: '16px', fontWeight: 600 }}>H1</div>,
-                shortcut: '# ',
-                command: (editor) => {
-                    editor.chain().focus().toggleHeading({ level: 1 }).run();
+export function createDefaultInsertMenuItems(locale?: string | null, overrides?: Parameters<typeof resolveDragHandleMessages>[1]): (InsertMenuItem | InsertMenuGroup)[] {
+    const messages = resolveDragHandleMessages(locale, overrides);
+
+    return [
+        {
+            id: 'basic',
+            title: messages.insertMenu.groups.basic,
+            items: [
+                {
+                    id: 'heading1',
+                    label: messages.insertMenu.items.heading1,
+                    icon: <div style={{ fontSize: '16px', fontWeight: 600 }}>H1</div>,
+                    shortcut: '# ',
+                    command: (editor) => {
+                        editor.chain().focus().toggleHeading({ level: 1 }).run();
+                    },
                 },
-            },
-            {
-                id: 'heading2',
-                label: '标题 2',
-                icon: <div style={{ fontSize: '15px', fontWeight: 600 }}>H2</div>,
-                shortcut: '## ',
-                command: (editor) => {
-                    editor.chain().focus().toggleHeading({ level: 2 }).run();
+                {
+                    id: 'heading2',
+                    label: messages.insertMenu.items.heading2,
+                    icon: <div style={{ fontSize: '15px', fontWeight: 600 }}>H2</div>,
+                    shortcut: '## ',
+                    command: (editor) => {
+                        editor.chain().focus().toggleHeading({ level: 2 }).run();
+                    },
                 },
-            },
-            {
-                id: 'heading3',
-                label: '标题 3',
-                icon: <div style={{ fontSize: '14px', fontWeight: 600 }}>H3</div>,
-                shortcut: '### ',
-                command: (editor) => {
-                    editor.chain().focus().toggleHeading({ level: 3 }).run();
+                {
+                    id: 'heading3',
+                    label: messages.insertMenu.items.heading3,
+                    icon: <div style={{ fontSize: '14px', fontWeight: 600 }}>H3</div>,
+                    shortcut: '### ',
+                    command: (editor) => {
+                        editor.chain().focus().toggleHeading({ level: 3 }).run();
+                    },
                 },
-            },
-            {
-                id: 'bulletList',
-                label: '无序列表',
-                icon: <ListIcon size={18} />,
-                shortcut: '- ',
-                command: (editor) => {
-                    editor.chain().focus().toggleBulletList().run();
+                {
+                    id: 'bulletList',
+                    label: messages.insertMenu.items.bulletList,
+                    icon: <ListIcon size={18} />,
+                    shortcut: '- ',
+                    command: (editor) => {
+                        editor.chain().focus().toggleBulletList().run();
+                    },
                 },
-            },
-            {
-                id: 'orderedList',
-                label: '有序列表',
-                icon: <ListIcon size={18} />,
-                shortcut: '1. ',
-                command: (editor) => {
-                    editor.chain().focus().toggleOrderedList().run();
+                {
+                    id: 'orderedList',
+                    label: messages.insertMenu.items.orderedList,
+                    icon: <ListIcon size={18} />,
+                    shortcut: '1. ',
+                    command: (editor) => {
+                        editor.chain().focus().toggleOrderedList().run();
+                    },
                 },
-            },
-        ],
-    },
-    {
-        id: 'common',
-        title: '常用',
-        items: [
-            {
-                id: 'paragraph',
-                label: '段落',
-                icon: <ParagraphIcon size={18} />,
-                command: (editor) => {
-                    editor.chain().focus().setParagraph().run();
+            ],
+        },
+        {
+            id: 'common',
+            title: messages.insertMenu.groups.common,
+            items: [
+                {
+                    id: 'paragraph',
+                    label: messages.insertMenu.items.paragraph,
+                    icon: <ParagraphIcon size={18} />,
+                    command: (editor) => {
+                        editor.chain().focus().setParagraph().run();
+                    },
                 },
-            },
-            {
-                id: 'blockquote',
-                label: '引用',
-                icon: <QuoteIcon size={18} />,
-                shortcut: '> ',
-                command: (editor) => {
-                    editor.chain().focus().toggleBlockquote().run();
+                {
+                    id: 'blockquote',
+                    label: messages.insertMenu.items.blockquote,
+                    icon: <QuoteIcon size={18} />,
+                    shortcut: '> ',
+                    command: (editor) => {
+                        editor.chain().focus().toggleBlockquote().run();
+                    },
                 },
-            },
-            {
-                id: 'codeBlock',
-                label: '代码块',
-                icon: <CodeIcon size={18} />,
-                shortcut: '```',
-                command: (editor) => {
-                    editor.chain().focus().toggleCodeBlock().run();
+                {
+                    id: 'codeBlock',
+                    label: messages.insertMenu.items.codeBlock,
+                    icon: <CodeIcon size={18} />,
+                    shortcut: '```',
+                    command: (editor) => {
+                        editor.chain().focus().toggleCodeBlock().run();
+                    },
                 },
-            },
-            {
-                id: 'horizontalRule',
-                label: '分割线',
-                icon: <DividerIcon size={18} />,
-                shortcut: '---',
-                command: (editor) => {
-                    editor.chain().focus().setHorizontalRule().run();
+                {
+                    id: 'horizontalRule',
+                    label: messages.insertMenu.items.horizontalRule,
+                    icon: <DividerIcon size={18} />,
+                    shortcut: '---',
+                    command: (editor) => {
+                        editor.chain().focus().setHorizontalRule().run();
+                    },
                 },
-            },
-        ],
-    },
-];
+            ],
+        },
+    ];
+}
+
+export const defaultInsertMenuItems: (InsertMenuItem | InsertMenuGroup)[] = createDefaultInsertMenuItems();
 
 // ============ 工具函数 ============
 
@@ -178,6 +185,12 @@ export interface InsertMenuContextValue {
     items: (InsertMenuItem | InsertMenuGroup)[];
     /** 菜单位置配置 */
     positionConfig: InsertMenuPositionConfig | undefined;
+    /** 菜单层级 */
+    zIndex: number;
+    /** 自定义菜单组件 */
+    component?: React.ComponentType<InsertMenuProps>;
+    /** 空状态文案 */
+    emptyLabel: string;
     /** 是否启用 */
     enabled: boolean;
     /** 打开菜单 */
@@ -200,31 +213,43 @@ export const InsertMenuProvider: React.FC<InsertMenuProviderProps> = ({ children
     const { editor, options } = useDragHandleContext();
     const [visible, setVisible] = useState(false);
     const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
-
-    // 是否启用插入菜单
+    const messages = useMemo(
+        () => resolveDragHandleMessages(options.locale, options.messages),
+        [options.locale, options.messages]
+    );
     const enabled = options.insertMenu?.enabled !== false;
-
     // 计算菜单项
     const items = useMemo(() => {
         const userItems = options.insertMenu?.items;
-        const itemsMode = options.insertMenu?.itemsMode ?? 'replace';
+        const strategy = options.insertMenu?.strategy ?? 'replace';
+        const builtInItems = createDefaultInsertMenuItems(options.locale, options.messages);
 
         if (!userItems?.length) {
-            return defaultInsertMenuItems;
+            return builtInItems;
         }
 
-        return itemsMode === 'merge'
-            ? mergeInsertMenuItems(defaultInsertMenuItems, userItems)
-            : userItems;
-    }, [options.insertMenu?.items, options.insertMenu?.itemsMode]);
+        return strategy === 'merge' ? mergeInsertMenuItems(builtInItems, userItems) : userItems;
+    }, [options.insertMenu?.items, options.insertMenu?.strategy, options.locale, options.messages]);
 
     // 菜单位置配置
-    const positionConfig = options.insertMenu?.position;
+    const positionConfig = useMemo(
+        () => ({
+            placement: options.insertMenu?.placement,
+            offset: options.insertMenu?.offset,
+        }),
+        [options.insertMenu?.placement, options.insertMenu?.offset]
+    );
+    const zIndex = options.insertMenu?.zIndex ?? 1000;
+    const component = options.insertMenu?.component;
+    const emptyLabel = messages.insertMenu.empty;
 
     // 打开菜单
     const openMenu = useCallback(
         (rect: DOMRect | null) => {
-            if (!enabled) return;
+            if (!enabled) {
+                return;
+            }
+
             setTriggerRect(rect);
             setVisible(true);
             lockDragHandle(editor, true);
@@ -270,11 +295,25 @@ export const InsertMenuProvider: React.FC<InsertMenuProviderProps> = ({ children
             triggerRect,
             items,
             positionConfig,
+            zIndex,
+            component,
+            emptyLabel,
             enabled,
             openMenu,
             closeMenu,
         }),
-        [visible, triggerRect, items, positionConfig, enabled, openMenu, closeMenu]
+        [
+            visible,
+            triggerRect,
+            items,
+            positionConfig,
+            zIndex,
+            component,
+            emptyLabel,
+            enabled,
+            openMenu,
+            closeMenu,
+        ]
     );
 
     return <InsertMenuContext.Provider value={value}>{children}</InsertMenuContext.Provider>;

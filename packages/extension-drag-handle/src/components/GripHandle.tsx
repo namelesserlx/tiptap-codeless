@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { useHandleBase } from '../hooks/useHandleBase';
 import { startDragNode } from '../utils/drag';
 import { GripIcon } from './Icons';
@@ -20,14 +20,16 @@ export const GripHandle: React.FC<GripHandleProps> = memo(() => {
         options,
         nodeInfo,
         locked,
+        isDragging,
         position,
-        handleStyle,
+        handle,
         isHovering,
+        shouldShow,
         handleMouseEnter,
         handleMouseLeave,
     } = useHandleBase();
 
-    const [isDragging, setIsDragging] = useState(false);
+    const isDisabled = locked || !editor.isEditable;
 
     // 通知插件更新拖拽状态
     const dispatchDraggingState = useCallback(
@@ -41,15 +43,14 @@ export const GripHandle: React.FC<GripHandleProps> = memo(() => {
     // 处理拖拽开始
     const handleDragStart = useCallback(
         (e: React.DragEvent) => {
-            if (!nodeInfo) {
+            if (!nodeInfo || !editor.isEditable) {
                 e.preventDefault();
                 return;
             }
 
-            setIsDragging(true);
             dispatchDraggingState(true);
-            startDragNode(editor, nodeInfo, e.nativeEvent);
-            options.onDragStart?.(nodeInfo, e.nativeEvent);
+            startDragNode(editor, nodeInfo, e.nativeEvent, options.drag?.opacity);
+            options.events?.onDragStart?.(nodeInfo, e.nativeEvent);
         },
         [editor, nodeInfo, options, dispatchDraggingState]
     );
@@ -57,34 +58,22 @@ export const GripHandle: React.FC<GripHandleProps> = memo(() => {
     // 处理拖拽结束
     const handleDragEnd = useCallback(
         (e: React.DragEvent) => {
-            setIsDragging(false);
             dispatchDraggingState(false);
-            options.onDragEnd?.(nodeInfo, e.nativeEvent);
+            options.events?.onDragEnd?.(nodeInfo, e.nativeEvent);
         },
         [nodeInfo, options, dispatchDraggingState]
     );
 
-    // 监听全局 drop 事件以处理跨区域拖拽
-    useEffect(() => {
-        const handleGlobalDrop = () => {
-            setIsDragging(false);
-            dispatchDraggingState(false);
-        };
-
-        document.addEventListener('drop', handleGlobalDrop);
-        return () => document.removeEventListener('drop', handleGlobalDrop);
-    }, [dispatchDraggingState]);
-
     // 渲染图标
     const icon = useMemo(() => {
-        const customIcon = options.element?.drag;
+        const customIcon = options.handle?.icons?.drag;
         if (customIcon) {
-            return customIcon as React.ReactNode;
+            return customIcon;
         }
-        return <GripIcon className="tiptap-drag-handle_icon" size={handleStyle.iconSize} />;
-    }, [handleStyle.iconSize, options.element?.drag]);
+        return <GripIcon className="tiptap-drag-handle_icon" size={handle.iconSize} />;
+    }, [handle.iconSize, options.handle?.icons?.drag]);
 
-    if (!position) {
+    if (!position || !shouldShow) {
         return null;
     }
 
@@ -99,13 +88,13 @@ export const GripHandle: React.FC<GripHandleProps> = memo(() => {
                 position: 'absolute',
                 left: position.left,
                 top: position.top,
-                width: handleStyle.width,
-                height: handleStyle.height,
-                zIndex: handleStyle.zIndex,
+                width: handle.width,
+                height: handle.height,
+                zIndex: handle.zIndex,
                 pointerEvents: 'auto',
                 opacity: 1,
             }}
-            draggable={!locked}
+            draggable={!isDisabled}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onMouseEnter={handleMouseEnter}

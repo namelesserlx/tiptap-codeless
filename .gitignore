@@ -44,10 +44,8 @@ coverage
 
 # Misc
 *.tgz
-.changeset/*.md
-!.changeset/README.md
 
 
 
 
-
+test-results/

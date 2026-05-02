@@ -3,7 +3,9 @@
 Enhanced code block extension for Tiptap with macOS-style chrome, syntax highlighting, Mermaid diagrams, and rich UX.
 
 - [English](README.md) (Current)
-- [中文](README.zh.md)
+- [中文](https://github.com/namelesserlx/tiptap-codeless/blob/main/packages/extension-code-block-pro/README.zh-CN.md)
+- [繁體中文](../../README.zh-TW.md)
+- [日本語](../../README.ja.md)
 
 ---
 
@@ -63,6 +65,7 @@ const editor = useEditor({
         }),
         CodeBlockPro.configure({
             lowlight,
+            locale: 'en',
             defaultLanguage: 'javascript',
             theme: 'auto', // 'light' | 'dark' | 'auto'
         }),
@@ -121,36 +124,82 @@ sequenceDiagram
 
 ## ⚙️ Configuration Options
 
+### Shared i18n options
+
+```ts
+CodeBlockPro.configure({
+    locale: 'ja',
+    messages: {
+        toolbar: {
+            copyCode: 'コードをコピー',
+        },
+    },
+    ui: {
+        layers: {
+            languageDropdown: 2400,
+        },
+    },
+});
+```
+
 | Option                          | Type                          | Default                                                                             | Description                                                               |
 | ------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `locale`                        | `'zh-CN' \| 'zh-TW' \| 'en' \| 'ja'` | `'zh-CN'`                                                                     | Built-in UI locale                                                        |
+| `messages`                      | `DeepPartial<CodeBlockProMessages>` | `{}`                                                                           | Override built-in labels                                                  |
 | `lowlight`                      | `Lowlight`                    | `undefined`                                                                         | Lowlight instance for syntax highlighting                                 |
 | `languages`                     | `LanguageConfig[]`            | `defaultLanguages`                                                                  | Available languages in the language selector                              |
 | `defaultLanguage`               | `string \| null`              | `null`                                                                              | Default language for new code blocks                                      |
 | `theme`                         | `'light' \| 'dark' \| 'auto'` | `'auto'`                                                                            | Theme mode                                                                |
-| `macosControls`                 | `MacOSControlsConfig`         | `{ showClose: true, showCollapse: true, showFullscreen: true }`                     | macOS-style header controls configuration                                 |
-| `macosControls.showClose`       | `boolean`                     | `true`                                                                              | Show close button                                                         |
-| `macosControls.showCollapse`    | `boolean`                     | `true`                                                                              | Show collapse button                                                      |
-| `macosControls.showFullscreen`  | `boolean`                     | `true`                                                                              | Show fullscreen button                                                    |
-| `macosControls.onClose`         | `(node, pos) => void`         | `undefined`                                                                         | Close button click callback                                               |
-| `macosControls.onFullscreen`    | `(node, pos) => void`         | `undefined`                                                                         | Fullscreen button click callback                                          |
-| `toolbar`                       | `ToolbarConfig`               | `{ showLanguageSelector: true, showCopyButton: true, showLineNumbersToggle: true }` | Toolbar configuration                                                     |
-| `toolbar.showLanguageSelector`  | `boolean`                     | `true`                                                                              | Show language selector                                                    |
-| `toolbar.showCopyButton`        | `boolean`                     | `true`                                                                              | Show copy button                                                          |
-| `toolbar.showLineNumbersToggle` | `boolean`                     | `true`                                                                              | Show line numbers toggle button                                           |
-| `lineNumbers`                   | `LineNumbersConfig`           | `{ enabled: true, startLine: 1, toggleable: true }`                                 | Line numbers configuration                                                |
+| `windowControls`                | `WindowControlsConfig`        | `{ close: true, collapse: true, fullscreen: true }`                                 | macOS-style header controls configuration                                 |
+| `windowControls.close`          | `boolean`                     | `true`                                                                              | Show close button                                                         |
+| `windowControls.collapse`       | `boolean`                     | `true`                                                                              | Show collapse button                                                      |
+| `windowControls.fullscreen`     | `boolean`                     | `true`                                                                              | Show fullscreen button                                                    |
+| `windowControls.onClose`        | `(node, pos) => void`         | `undefined`                                                                         | Close button click callback                                               |
+| `windowControls.onFullscreen`   | `(node, pos) => void`         | `undefined`                                                                         | Fullscreen button click callback                                          |
+| `toolbar`                       | `ToolbarConfig`               | `{ language: true, copy: true, lineNumbers: true }`                                 | Toolbar configuration                                                     |
+| `toolbar.language`              | `boolean`                     | `true`                                                                              | Show language selector                                                    |
+| `toolbar.copy`                  | `boolean`                     | `true`                                                                              | Show copy button                                                          |
+| `toolbar.lineNumbers`           | `boolean`                     | `true`                                                                              | Show line numbers toggle button                                           |
+| `lineNumbers`                   | `LineNumbersConfig`           | `{ enabled: true, start: 1, allowToggle: true }`                                    | Line numbers configuration                                                |
 | `lineNumbers.enabled`           | `boolean`                     | `true`                                                                              | Enable line numbers by default                                            |
-| `lineNumbers.startLine`         | `number`                      | `1`                                                                                 | Starting line number                                                      |
-| `lineNumbers.toggleable`        | `boolean`                     | `true`                                                                              | Allow toggling line numbers                                               |
-| `collapse`                      | `CollapseConfig`              | `{ enabled: true, defaultCollapsed: false, collapsedLines: 3 }`                     | Code folding configuration                                                |
+| `lineNumbers.start`             | `number`                      | `1`                                                                                 | Starting line number                                                      |
+| `lineNumbers.allowToggle`       | `boolean`                     | `true`                                                                              | Allow toggling line numbers                                               |
+| `collapse`                      | `CollapseConfig`              | `{ enabled: true, defaultCollapsed: false, visibleLines: 3 }`                       | Code folding configuration                                                |
 | `collapse.enabled`              | `boolean`                     | `true`                                                                              | Enable code folding                                                       |
 | `collapse.defaultCollapsed`     | `boolean`                     | `false`                                                                             | Default collapsed state                                                   |
-| `collapse.collapsedLines`       | `number`                      | `3`                                                                                 | Number of lines to show when collapsed                                    |
-| `lazyRender`                    | `LazyRenderConfig`            | `{ enabled: false, rootMargin: '100px', placeholderHeight: 100 }`                   | Lazy render configuration for performance with many code blocks           |
-| `lazyRender.enabled`            | `boolean`                     | `false`                                                                             | Enable lazy render (only render when in viewport)                         |
-| `lazyRender.rootMargin`         | `string`                      | `'100px'`                                                                           | IntersectionObserver root margin (e.g. start render 100px before visible) |
-| `lazyRender.placeholderHeight`  | `number`                      | `100`                                                                               | Placeholder height (px) before content is rendered                        |
-| `className`                     | `string`                      | `undefined`                                                                         | Custom CSS class name                                                     |
+| `collapse.visibleLines`         | `number`                      | `3`                                                                                 | Number of lines to show when collapsed                                    |
+| `rendering`                     | `RenderingConfig`             | `{ lazy: false, rootMargin: '100px', placeholderHeight: 100 }`                      | Render performance configuration                                          |
+| `rendering.lazy`                | `boolean`                     | `false`                                                                             | Enable lazy render (only render when in viewport)                         |
+| `rendering.rootMargin`          | `string`                      | `'100px'`                                                                           | IntersectionObserver root margin (e.g. start render 100px before visible) |
+| `rendering.placeholderHeight`   | `number`                      | `100`                                                                               | Placeholder height (px) before content is rendered                        |
 | `HTMLAttributes`                | `Record<string, any>`         | `{ class: 'code-block-pro' }`                                                       | Additional HTML attributes                                                |
+| `ui.layers.languageDropdown`    | `number`                      | `1000`                                                                              | Dropdown stacking order                                                   |
+
+---
+
+## 🔒 Read-only Mode
+
+`CodeBlockPro` follows Tiptap's editor-level read-only state. You don't need a separate `readonly` option in this extension.
+
+```tsx
+const editor = useEditor({
+    editable: false,
+    extensions: [
+        StarterKit.configure({ codeBlock: false }),
+        CodeBlockPro.configure({ lowlight }),
+    ],
+});
+
+// Toggle later
+editor?.setEditable(false);
+editor?.setEditable(true);
+```
+
+When the editor is read-only:
+
+- Document mutations are disabled: editing code text, changing language, deleting the block, and mutating command APIs return no-op / `false`.
+- View-only controls remain available: copy, fullscreen, collapse/expand, line-number visibility, and Mermaid code/diagram preview.
+- View-only toggles do not persist to the document JSON while read-only.
 
 ---
 
@@ -202,9 +251,14 @@ All visual styles are driven by CSS variables, so you can override them in your 
     --cbp-text: #24292e;
     --cbp-border: #d0d7de;
     --cbp-accent-color: #3b82f6;
+    --cbp-font-mono:
+        ui-monospace, 'SFMono-Regular', 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono',
+        'Liberation Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
     /* More variables can be found in src/styles/*.css */
 }
 ```
+
+By default, CodeBlock Pro uses a single system monospace stack for the wrapper and code content, which matches common editor best practices and avoids shipping bundled font assets. If your product needs a stricter visual baseline, override `--cbp-font-mono` from your app stylesheet.
 
 You can also add different prefix classes (e.g., `theme-dark`) for more fine-grained control.
 
@@ -219,28 +273,28 @@ CodeBlockPro.configure({
     lowlight, // Required for syntax highlighting
     defaultLanguage: 'javascript',
     theme: 'auto',
-    macosControls: {
-        showClose: true,
-        showCollapse: true,
-        showFullscreen: true,
+    windowControls: {
+        close: true,
+        collapse: true,
+        fullscreen: true,
     },
     toolbar: {
-        showLanguageSelector: true,
-        showCopyButton: true,
-        showLineNumbersToggle: true,
+        language: true,
+        copy: true,
+        lineNumbers: true,
     },
     lineNumbers: {
         enabled: true,
-        startLine: 1,
-        toggleable: true,
+        start: 1,
+        allowToggle: true,
     },
     collapse: {
         enabled: true,
         defaultCollapsed: false,
-        collapsedLines: 3,
+        visibleLines: 3,
     },
-    lazyRender: {
-        enabled: false, // Enable for pages with many code blocks
+    rendering: {
+        lazy: false, // Enable for pages with many code blocks
         rootMargin: '100px',
         placeholderHeight: 100,
     },

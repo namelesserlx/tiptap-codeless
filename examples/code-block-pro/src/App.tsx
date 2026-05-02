@@ -2,7 +2,7 @@ import { CodeBlockPro } from '@tiptap-codeless/extension-code-block-pro';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { createLowlight } from 'lowlight';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // 导入常用语言
 import bash from 'highlight.js/lib/languages/bash';
@@ -146,40 +146,49 @@ type ThemeType = 'light' | 'dark' | 'auto';
 
 function App() {
     const [theme, setTheme] = useState<ThemeType>('auto');
+    const [editable, setEditable] = useState(true);
 
     const editor = useEditor({
+        immediatelyRender: false,
+        editable,
         extensions: [
             StarterKit.configure({
                 codeBlock: false, // 禁用默认的代码块
             }),
             CodeBlockPro.configure({
                 lowlight,
+                locale: 'zh-CN',
                 defaultLanguage: 'javascript',
                 theme: theme,
-                // macosControls: {
-                //     showClose: true,
-                //     showCollapse: true,
-                //     showFullscreen: true,
+                // windowControls: {
+                //     close: true,
+                //     collapse: true,
+                //     fullscreen: true,
                 // },
                 toolbar: {
-                    showLanguageSelector: true,
-                    showCopyButton: true,
-                    showLineNumbersToggle: true,
+                    language: true,
+                    copy: true,
+                    lineNumbers: true,
                 },
                 lineNumbers: {
                     enabled: true,
-                    startLine: 1,
-                    toggleable: true,
+                    start: 1,
+                    allowToggle: true,
                 },
                 collapse: {
                     enabled: true,
                     defaultCollapsed: false,
-                    collapsedLines: 5,
+                    visibleLines: 5,
                 },
-                lazyRender: {
-                    enabled: true, // 启用延迟渲染
+                rendering: {
+                    lazy: true, // 启用延迟渲染
                     rootMargin: '100px', // 提前 100px 开始渲染
                     placeholderHeight: 120, // 占位符高度
+                },
+                ui: {
+                    layers: {
+                        languageDropdown: 2400,
+                    },
                 },
             }),
         ],
@@ -190,6 +199,11 @@ function App() {
             },
         },
     });
+
+    useEffect(() => {
+        if (!editor) return;
+        editor.setEditable(editable);
+    }, [editor, editable]);
 
     const handleThemeChange = (newTheme: ThemeType) => {
         setTheme(newTheme);
@@ -220,6 +234,15 @@ function App() {
             <header className="app-header">
                 <h1>CodeBlock Pro Example</h1>
                 <div className="header-actions">
+                    <div className="theme-switcher">
+                        <label>可编辑:</label>
+                        <button
+                            className={editable ? 'active' : ''}
+                            onClick={() => setEditable((v) => !v)}
+                        >
+                            {editable ? '✅ 可编辑' : '🚫 禁用'}
+                        </button>
+                    </div>
                     <div className="theme-switcher">
                         <label>主题:</label>
                         <button

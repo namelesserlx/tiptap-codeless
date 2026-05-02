@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatCodeBlockProMessage } from '@/i18n';
 import { useConfigContext, useMermaidContext, useStateContext } from '@/contexts';
 import { useLineCount } from '@/hooks';
 
@@ -7,7 +8,7 @@ import { useLineCount } from '@/hooks';
  * 内部自动计算行数，避免依赖 context 导致不必要的重新渲染
  */
 export const ExpandButton: React.FC = () => {
-    const { contentRef } = useConfigContext();
+    const { contentRef, messages } = useConfigContext();
 
     const { isCollapsed, isCollapsible, toggleCollapse } = useStateContext();
 
@@ -20,10 +21,12 @@ export const ExpandButton: React.FC = () => {
     }
 
     const label = isShowingMermaidDiagram
-        ? '展开图表'
+        ? messages.expandButton.expandDiagram
         : lineCount > 0
-          ? `展开全部 (${lineCount} 行)`
-          : '展开全部';
+          ? formatCodeBlockProMessage(messages.expandButton.expandAllWithCount, {
+                count: lineCount,
+            })
+          : messages.expandButton.expandAll;
 
     return (
         <button type="button" className="expand-button" onClick={toggleCollapse} aria-label={label}>
