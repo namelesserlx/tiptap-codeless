@@ -28,16 +28,15 @@ export interface ToolbarProps {
  */
 export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
     const {
-        nodeAttrs,
         options,
         messages,
-        updateAttributes,
+        isEditable,
+        showMermaidDiagram,
+        toggleMermaidDiagram,
         currentLanguage,
         languages,
         changeLanguage,
         getCodeContent,
-        getBodyHeight,
-        diagramFromHeightRef,
         wrapperRef,
     } = useConfigContext();
 
@@ -47,7 +46,6 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
 
     // 复制逻辑（仅在此组件使用）
     const { copyState, copy } = useCopy();
-    const showMermaidDiagram = nodeAttrs.showMermaidDiagram ?? false;
 
     // 处理复制（仅在此组件使用）
     const handleCopy = useCallback(() => {
@@ -57,28 +55,22 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
         }
     }, [getCodeContent, copy]);
 
-    // 处理 Mermaid 图表切换：切到图表前写入当前 body 高度，图表从该高度平滑展开
-    const toggleMermaidDiagram = useCallback(() => {
-        const newValue = !showMermaidDiagram;
-        if (newValue) diagramFromHeightRef.current = getBodyHeight();
-        updateAttributes({ showMermaidDiagram: newValue });
-    }, [showMermaidDiagram, updateAttributes, getBodyHeight, diagramFromHeightRef]);
-
     const {
-        showLanguageSelector = true,
-        showCopyButton = true,
-        showLineNumbersToggle = true,
+        language: showLanguageSelector = true,
+        copy: showCopyButton = true,
+        lineNumbers: showLineNumbersToggle = true,
     } = options.toolbar || {};
 
     const showMermaidToggle = isMermaid;
-    const showLineNumbersToggleButton = showLineNumbersToggle && options.lineNumbers?.toggleable;
+    const showLineNumbersToggleButton = showLineNumbersToggle && options.lineNumbers?.allowToggle;
     const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
-    const dropdownZIndex = options.ui?.languageDropdown?.zIndex ?? 1000;
+    const isLanguageDropdownVisible = isEditable && isLanguageDropdownOpen;
+    const dropdownZIndex = options.ui?.layers?.languageDropdown ?? 1000;
 
     // 点击外部关闭下拉菜单
     const dropdownRef = useClickOutside<HTMLDivElement>(() => {
         setIsLanguageDropdownOpen(false);
-    }, isLanguageDropdownOpen);
+    }, isLanguageDropdownVisible);
 
     useEffect(() => {
         const wrapper = wrapperRef.current;
@@ -86,12 +78,12 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
             return;
         }
 
-        wrapper.classList.toggle('is-language-dropdown-open', isLanguageDropdownOpen);
+        wrapper.classList.toggle('is-language-dropdown-open', isLanguageDropdownVisible);
 
         return () => {
             wrapper.classList.remove('is-language-dropdown-open');
         };
-    }, [isLanguageDropdownOpen, wrapperRef]);
+    }, [isLanguageDropdownVisible, wrapperRef]);
 
     // 处理语言选择
     const handleLanguageSelect = (language: string) => {
@@ -107,9 +99,12 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
                     <button
                         type="button"
                         className="language-button"
-                        onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
+                        onClick={() => {
+                            if (isEditable) setIsLanguageDropdownOpen(!isLanguageDropdownOpen);
+                        }}
+                        disabled={!isEditable}
                         aria-label={messages.toolbar.selectLanguage}
-                        aria-expanded={isLanguageDropdownOpen}
+                        aria-expanded={isLanguageDropdownVisible}
                     >
                         <span className="language-label">{currentLanguage.label}</span>
                         <ChevronDownIcon
@@ -120,7 +115,7 @@ export const Toolbar: React.FC<ToolbarProps> = React.memo(({ className }) => {
                         />
                     </button>
 
-                    {isLanguageDropdownOpen && (
+                    {isLanguageDropdownVisible && (
                         <div className="language-dropdown" style={{ zIndex: dropdownZIndex }}>
                             <div className="language-list">
                                 {languages.map((lang) => (

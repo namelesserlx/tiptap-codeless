@@ -23,13 +23,13 @@ function createConfigValue(wrapperElement?: HTMLDivElement): ConfigContextValue 
         options: {
             theme: 'auto',
             toolbar: {
-                showLanguageSelector: true,
-                showCopyButton: false,
-                showLineNumbersToggle: true,
+                language: true,
+                copy: false,
+                lineNumbers: true,
             },
             lineNumbers: {
                 enabled: true,
-                toggleable: true,
+                allowToggle: true,
             },
             locale: 'en',
             messages: {
@@ -40,8 +40,8 @@ function createConfigValue(wrapperElement?: HTMLDivElement): ConfigContextValue 
                 },
             },
             ui: {
-                languageDropdown: {
-                    zIndex: 2400,
+                layers: {
+                    languageDropdown: 2400,
                 },
             },
         } as never,
@@ -86,6 +86,9 @@ function createConfigValue(wrapperElement?: HTMLDivElement): ConfigContextValue 
             },
         },
         updateAttributes: vi.fn(),
+        isEditable: true,
+        showMermaidDiagram: false,
+        toggleMermaidDiagram: vi.fn(),
         deleteNode: vi.fn(),
         getPos: vi.fn(() => 1),
         contentRef: { current: null },
@@ -153,5 +156,36 @@ describe('Toolbar', () => {
         );
 
         expect(wrapperElement.classList.contains('is-language-dropdown-open')).toBe(false);
+    });
+
+    it('keeps readonly view toggles available while disabling language changes', () => {
+        const toggleLineNumbers = vi.fn();
+        const configValue = {
+            ...createConfigValue(),
+            isEditable: false,
+        };
+        render(
+            <ConfigContextProvider value={configValue}>
+                <StateContextProvider value={{ ...stateValue, toggleLineNumbers }}>
+                    <MermaidContextProvider value={mermaidValue}>
+                        <Toolbar />
+                    </MermaidContextProvider>
+                </StateContextProvider>
+            </ConfigContextProvider>
+        );
+
+        expect(
+            screen.getByRole('button', {
+                name: 'Choose programming language',
+            })
+        ).toBeDisabled();
+
+        fireEvent.click(
+            screen.getByRole('button', {
+                name: 'Hide line numbers',
+            })
+        );
+
+        expect(toggleLineNumbers).toHaveBeenCalledTimes(1);
     });
 });

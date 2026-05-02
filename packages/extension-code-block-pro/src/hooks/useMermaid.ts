@@ -3,8 +3,9 @@
  */
 
 import type { MutableRefObject } from 'react';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { CodeBlockProMessages } from '@/i18n';
+import { renderMermaidSvg } from '@/runtime/mermaidAdapter';
 import type { CodeBlockTheme } from '@/types';
 
 /** 高度变化超过此阈值（px）时才执行动画，避免小幅抖动也过渡 */
@@ -51,7 +52,7 @@ export function useMermaid(options: UseMermaidOptions) {
     const { isMermaid, content, showDiagram, theme, diagramFromHeightRef, messages } = options;
 
     const mermaidRef = useRef<HTMLDivElement>(null);
-    const mermaidIdRef = useRef<string>(`mermaid-${Math.random().toString(36).substr(2, 9)}`);
+    const mermaidId = useId().replace(/:/g, '-');
     /** 是否已完成首次展开动画，用于区分首次显示与后续内容变更 */
     const hasAnimatedInRef = useRef(false);
     /** 是否已展开（用于控制内容可见性，通过返回值传给组件的 className） */
@@ -60,6 +61,8 @@ export function useMermaid(options: UseMermaidOptions) {
     const cachedContentRef = useRef<string>('');
     /** 上一次渲染的内容，用于判断是否需要重新渲染 */
     const lastRenderedContentRef = useRef<string>('');
+    /** 仅应用最近一次异步渲染结果 */
+    const renderSequenceRef = useRef(0);
 
     // 关闭图表视图时重置状态
     useEffect(() => {
@@ -67,7 +70,7 @@ export function useMermaid(options: UseMermaidOptions) {
             hasAnimatedInRef.current = false;
             cachedContentRef.current = '';
             lastRenderedContentRef.current = '';
-            setIsExpanded(false);
+            queueMicrotask(() => setIsExpanded(false));
         }
     }, [showDiagram]);
 
@@ -188,26 +191,28 @@ export function useMermaid(options: UseMermaidOptions) {
         }
 
         let cancelled = false;
+        const renderSequence = renderSequenceRef.current + 1;
+        renderSequenceRef.current = renderSequence;
 
         const renderMermaid = async () => {
             try {
-                const mermaid = (await import('mermaid')).default;
-                if (cancelled) return;
-
-                mermaid.initialize({
-                    startOnLoad: false,
-                    theme: theme === 'dark' ? 'dark' : 'default',
-                    securityLevel: 'loose',
+                const svg = await renderMermaidSvg({
+                    id: `mermaid-${mermaidId}`,
+                    content: effectiveContent,
+                    theme,
                 });
 
-                const id = mermaidIdRef.current;
-                const { svg } = await mermaid.render(id, effectiveContent);
-
-                if (cancelled || !mermaidRef.current) return;
+                if (
+                    cancelled ||
+                    renderSequence !== renderSequenceRef.current ||
+                    !mermaidRef.current
+                ) {
+                    return;
+                }
                 renderWithHeightTransition(svg);
                 lastRenderedContentRef.current = effectiveContent;
             } catch (error) {
-                if (cancelled) return;
+                if (cancelled || renderSequence !== renderSequenceRef.current) return;
                 console.error('Mermaid render error:', error);
                 if (mermaidRef.current) {
                     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -237,7 +242,7 @@ export function useMermaid(options: UseMermaidOptions) {
         return () => {
             cancelled = true;
         };
-    }, [isMermaid, showDiagram, content, theme, messages, renderWithHeightTransition]);
+    }, [isMermaid, showDiagram, content, theme, messages, mermaidId, renderWithHeightTransition]);
 
     return {
         mermaidRef,

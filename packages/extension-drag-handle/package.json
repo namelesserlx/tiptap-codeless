@@ -33,11 +33,12 @@
     },
     "files": [
         "dist",
-        "README.md"
+        "README.md",
+        "README.zh-CN.md"
     ],
     "scripts": {
         "dev": "tsc && vite build --watch",
-        "build": "rm -rf dist && vite build && node ../../scripts/bundle-dts.mjs --project tsconfig.json --entry src/index.ts --output dist/index.d.ts --external-import @tiptap-codeless/core",
+        "build": "rm -rf dist && vite build && node ../../scripts/bundle-dts.mjs --project tsconfig.json --entry src/index.ts --output dist/index.d.ts --external-import @tiptap-codeless/core --append-declaration src/types/tiptap-starter-kit-commands.ts",
         "type-check": "tsc --noEmit",
         "lint": "eslint src test",
         "clean": "rm -rf dist",
@@ -45,9 +46,9 @@
     },
     "dependencies": {
         "@tiptap-codeless/core": "workspace:*",
-        "@tiptap/core": "^3.13.0",
-        "@tiptap/pm": "^3.13.0",
-        "@tiptap/react": "^3.13.0",
+        "@tiptap/core": "^3.22.4",
+        "@tiptap/pm": "^3.22.4",
+        "@tiptap/react": "^3.22.4",
         "classnames": "^2.5.1"
     },
     "devDependencies": {

@@ -4,13 +4,42 @@
 
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { MacOSControlsConfig } from '@/types';
+import type { WindowControlsConfig } from '@/types';
+
+let bodyScrollLockCount = 0;
+let previousBodyOverflow: string | null = null;
+
+function lockBodyScroll() {
+    if (typeof document === 'undefined') {
+        return;
+    }
+
+    if (bodyScrollLockCount === 0) {
+        previousBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+    }
+
+    bodyScrollLockCount += 1;
+}
+
+function unlockBodyScroll() {
+    if (typeof document === 'undefined' || bodyScrollLockCount === 0) {
+        return;
+    }
+
+    bodyScrollLockCount -= 1;
+
+    if (bodyScrollLockCount === 0) {
+        document.body.style.overflow = previousBodyOverflow ?? '';
+        previousBodyOverflow = null;
+    }
+}
 
 export interface UseFullscreenOptions {
     /**
-     * MacOS 控制配置
+     * 窗口控制配置
      */
-    macosControls?: MacOSControlsConfig;
+    windowControls?: WindowControlsConfig;
 
     /**
      * 节点
@@ -27,7 +56,7 @@ export interface UseFullscreenOptions {
  * 全屏逻辑 Hook
  */
 export function useFullscreen(options: UseFullscreenOptions) {
-    const { macosControls, node, getPos } = options;
+    const { windowControls, node, getPos } = options;
 
     const [isFullscreen, setIsFullscreen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -36,19 +65,19 @@ export function useFullscreen(options: UseFullscreenOptions) {
     // 这样可以避免每次 node 变化时都重新创建 handleFullscreen
     const nodeRef = useRef(node);
     const getPosRef = useRef(getPos);
-    const macosControlsRef = useRef(macosControls);
+    const windowControlsRef = useRef(windowControls);
 
     // 更新 ref 的值
     useEffect(() => {
         nodeRef.current = node;
         getPosRef.current = getPos;
-        macosControlsRef.current = macosControls;
-    }, [node, getPos, macosControls]);
+        windowControlsRef.current = windowControls;
+    }, [node, getPos, windowControls]);
 
-    // 处理全屏切换 - 不依赖 node、getPos 和 macosControls，使用 ref 来访问最新值
+    // 处理全屏切换 - 不依赖 node、getPos 和 windowControls，使用 ref 来访问最新值
     const handleFullscreen = useCallback(() => {
-        if (macosControlsRef.current?.onFullscreen) {
-            macosControlsRef.current.onFullscreen(nodeRef.current, getPosRef.current());
+        if (windowControlsRef.current?.onFullscreen) {
+            windowControlsRef.current.onFullscreen(nodeRef.current, getPosRef.current());
         } else {
             // 默认实现：切换全屏状态
             setIsFullscreen((prev) => !prev);
@@ -66,12 +95,11 @@ export function useFullscreen(options: UseFullscreenOptions) {
         };
 
         document.addEventListener('keydown', handleKeyDown);
-        // 全屏时禁止 body 滚动
-        document.body.style.overflow = 'hidden';
+        lockBodyScroll();
 
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
-            document.body.style.overflow = '';
+            unlockBodyScroll();
         };
     }, [isFullscreen]);
 

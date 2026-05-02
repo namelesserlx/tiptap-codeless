@@ -6,9 +6,13 @@ export type UploadImageAttrs = {
     src: string;
     alt?: string | null;
     title?: string | null;
+    fileName?: string | null;
+    mimeType?: string | null;
     width?: number | null;
     height?: number | null;
     align?: 'left' | 'center' | 'right' | null;
+    storageMode?: string | null;
+    storageKey?: string | null;
 };
 
 export const UploadImage = Node.create({
@@ -25,8 +29,12 @@ export const UploadImage = Node.create({
             src: { default: null },
             alt: { default: null },
             title: { default: null },
+            fileName: { default: null },
+            mimeType: { default: null },
             width: { default: null },
             height: { default: null },
+            storageMode: { default: null },
+            storageKey: { default: null },
             align: {
                 default: null,
                 parseHTML: (element) => {
@@ -62,9 +70,13 @@ export const UploadImage = Node.create({
                         src: element.getAttribute('src'),
                         alt: element.getAttribute('alt'),
                         title: element.getAttribute('title'),
+                        fileName: element.getAttribute('data-file-name'),
+                        mimeType: element.getAttribute('data-mime-type'),
                         width: Number.isFinite(width) ? width : null,
                         height: Number.isFinite(height) ? height : null,
                         align,
+                        storageMode: element.getAttribute('data-storage-mode'),
+                        storageKey: element.getAttribute('data-storage-key'),
                     };
                 },
             },
@@ -72,7 +84,8 @@ export const UploadImage = Node.create({
     },
 
     renderHTML({ HTMLAttributes }) {
-        const { width, height, align } = HTMLAttributes as UploadImageAttrs;
+        const { width, height, align, fileName, mimeType, storageMode, storageKey } =
+            HTMLAttributes as UploadImageAttrs;
         return [
             'img',
             {
@@ -81,6 +94,10 @@ export const UploadImage = Node.create({
                 ...(width ? { width } : {}),
                 ...(height ? { height } : {}),
                 ...(align ? { 'data-align': align } : {}),
+                ...(fileName ? { 'data-file-name': fileName } : {}),
+                ...(mimeType ? { 'data-mime-type': mimeType } : {}),
+                ...(storageMode ? { 'data-storage-mode': storageMode } : {}),
+                ...(storageKey ? { 'data-storage-key': storageKey } : {}),
             },
         ];
     },

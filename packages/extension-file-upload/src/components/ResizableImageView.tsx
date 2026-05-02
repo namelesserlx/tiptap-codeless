@@ -1,8 +1,9 @@
 import { ImageBubbleMenu } from '@/components/ImageBubbleMenu';
+import { useResolvedAssetUrl } from '@/hooks/useResolvedAssetUrl';
 import type { NodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import classNames from 'classnames';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
 type Corner = 'nw' | 'ne' | 'sw' | 'se';
@@ -15,13 +16,27 @@ export const ResizableImageView: React.FC<NodeViewProps> = ({
     updateAttributes,
     editor,
 }) => {
+    const isEditable = useSyncExternalStore(
+        (callback) => {
+            if (!editor || typeof editor.on !== 'function') {
+                return () => {};
+            }
+            editor.on('update', callback);
+            return () => {
+                editor.off('update', callback);
+            };
+        },
+        () => editor?.isEditable ?? true
+    );
+
     // 从 editor.storage 获取配置
-    const imgBubbleMenuConfig = editor?.storage?.fileUpload?.imgBubbleMenuConfig as
-        | {
-              enabled?: boolean;
-              zIndex?: number;
-          }
-        | undefined;
+    const bubbleMenuConfig =
+        (editor?.storage?.fileUpload?.ui?.bubbleMenu as
+            | {
+                  enabled?: boolean;
+                  zIndex?: number;
+              }
+            | undefined);
     const messages = editor?.storage?.fileUpload?.messages as
         | {
               bubbleMenu?: {
@@ -53,7 +68,17 @@ export const ResizableImageView: React.FC<NodeViewProps> = ({
         width?: number | null;
         height?: number | null;
         align?: 'left' | 'center' | 'right' | null;
+        fileName?: string | null;
+        mimeType?: string | null;
+        storageMode?: 'memory' | 'base64' | 'local' | 'custom' | null;
+        storageKey?: string | null;
     };
+    const resolvedUrl = useResolvedAssetUrl(editor ?? null, {
+        url: attrs.src,
+        fileName: attrs.fileName,
+        storageMode: attrs.storageMode ?? undefined,
+        storageKey: attrs.storageKey,
+    });
 
     const style = useMemo(() => {
         // 只设置 width，让 height 自动计算以保持宽高比
@@ -63,6 +88,8 @@ export const ResizableImageView: React.FC<NodeViewProps> = ({
 
     const beginResize = useCallback(
         (corner: Corner) => (e: React.MouseEvent) => {
+            if (!isEditable) return;
+
             e.preventDefault();
             e.stopPropagation();
 
@@ -133,7 +160,7 @@ export const ResizableImageView: React.FC<NodeViewProps> = ({
             document.addEventListener('mousemove', onMove);
             document.addEventListener('mouseup', onUp);
         },
-        [updateAttributes]
+        [isEditable, updateAttributes]
     );
 
     useEffect(() => {
@@ -144,6 +171,8 @@ export const ResizableImageView: React.FC<NodeViewProps> = ({
 
     const handleAlignChange = useCallback(
         (align: 'left' | 'center' | 'right') => {
+            if (!isEditable) return;
+
             updateAttributes({ align });
             // 对齐方式改变后，延迟更新菜单位置（等待 DOM 更新）
             requestAnimationFrame(() => {
@@ -159,11 +188,11 @@ export const ResizableImageView: React.FC<NodeViewProps> = ({
                 });
             });
         },
-        [updateAttributes, selected]
+        [isEditable, updateAttributes, selected]
     );
 
     useEffect(() => {
-        if (!selected || !imgRef.current) {
+        if (!selected || !isEditable || !imgRef.current) {
             queueMicrotask(() => setBubbleMenuPosition(null));
             return;
         }
@@ -206,7 +235,7 @@ export const ResizableImageView: React.FC<NodeViewProps> = ({
             window.removeEventListener('resize', updatePosition);
             window.removeEventListener('scroll', updatePosition, true);
         };
-    }, [selected, attrs.width, attrs.height, attrs.align]);
+    }, [selected, isEditable, attrs.width, attrs.height, attrs.align]);
 
     const wrapperClassName = useMemo(() => {
         return classNames('tiptap-upload-image', {
@@ -216,28 +245,28 @@ export const ResizableImageView: React.FC<NodeViewProps> = ({
         });
     }, [attrs.align]);
 
-    const { enabled = true, zIndex = 1000 } = imgBubbleMenuConfig ?? {};
+    const { enabled = true, zIndex = 1000 } = bubbleMenuConfig ?? {};
 
     return (
         <>
-            <NodeViewWrapper className={wrapperClassName}>
+            <NodeViewWrapper className={wrapperClassName} draggable={isEditable}>
                 <div
                     ref={frameRef}
                     className={classNames('tiptap-upload-image__frame', {
-                        'tiptap-upload-image__frame--selected': selected,
+                        'tiptap-upload-image__frame--selected': selected && isEditable,
                     })}
                 >
                     <img
                         ref={imgRef}
                         className="tiptap-upload-image__img"
-                        src={attrs.src}
+                        src={resolvedUrl}
                         alt={attrs.alt ?? ''}
                         title={attrs.title ?? undefined}
                         draggable={false}
                         style={style}
                     />
 
-                    {selected && (
+                    {selected && isEditable && (
                         <>
                             <div className="tiptap-upload-image__handles">
                                 <button
@@ -269,6 +298,7 @@ export const ResizableImageView: React.FC<NodeViewProps> = ({
             {/* 气泡菜单 */}
             {selected &&
                 editor &&
+                isEditable &&
                 enabled &&
                 bubbleMenuPosition &&
                 createPortal(

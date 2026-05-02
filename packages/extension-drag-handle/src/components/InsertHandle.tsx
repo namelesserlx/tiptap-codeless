@@ -19,39 +19,40 @@ export const InsertHandle: React.FC<InsertHandleProps> = memo(() => {
         nodeInfo,
         locked,
         position,
-        handleStyle,
+        handle,
         isHovering,
+        shouldShow,
         handleMouseEnter,
         handleMouseLeave,
     } = useHandleBase();
 
-    const { openMenu, enabled: insertMenuEnabled } = useInsertMenuContext();
+    const { openMenu, enabled } = useInsertMenuContext();
 
     // 处理点击（触发插入菜单）
     const handleClick = useCallback(
         (e: React.MouseEvent<HTMLDivElement>) => {
-            if (!nodeInfo || !insertMenuEnabled) return;
+            if (!nodeInfo || !enabled) return;
 
             // 以当前元素为触发区域
             const rect = e.currentTarget.getBoundingClientRect();
             openMenu(rect);
 
             // 对外暴露的插入点击回调
-            options.onInsertClick?.(nodeInfo, e.nativeEvent);
+            options.events?.onInsertClick?.(nodeInfo, e.nativeEvent);
         },
-        [nodeInfo, insertMenuEnabled, openMenu, options]
+        [enabled, nodeInfo, openMenu, options]
     );
 
     // 渲染图标
     const icon = useMemo(() => {
-        const customIcon = options.element?.insert;
+        const customIcon = options.handle?.icons?.insert;
         if (customIcon) {
-            return customIcon as React.ReactNode;
+            return customIcon;
         }
-        return <PlusIcon className="tiptap-drag-handle_icon" size={handleStyle.iconSize} />;
-    }, [handleStyle.iconSize, options.element?.insert]);
+        return <PlusIcon className="tiptap-drag-handle_icon" size={handle.iconSize} />;
+    }, [handle.iconSize, options.handle?.icons?.insert]);
 
-    if (!position) {
+    if (!position || !shouldShow || !enabled) {
         return null;
     }
 
@@ -65,9 +66,9 @@ export const InsertHandle: React.FC<InsertHandleProps> = memo(() => {
                 position: 'absolute',
                 left: position.left,
                 top: position.top,
-                width: handleStyle.width,
-                height: handleStyle.height,
-                zIndex: handleStyle.zIndex,
+                width: handle.width,
+                height: handle.height,
+                zIndex: handle.zIndex,
                 pointerEvents: 'auto',
                 opacity: 1,
             }}

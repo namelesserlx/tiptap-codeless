@@ -11,7 +11,20 @@
     border-radius: var(--cbp-radius-lg);
     overflow: visible;
     transition: all 0.2s ease;
-    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-family: var(
+        --cbp-font-mono,
+        ui-monospace,
+        'SFMono-Regular',
+        'SF Mono',
+        'Cascadia Mono',
+        'Segoe UI Mono',
+        'Liberation Mono',
+        Menlo,
+        Monaco,
+        Consolas,
+        'Courier New',
+        monospace
+    );
     max-width: 100%;
 }
 
@@ -490,19 +503,38 @@
     display: block;
     font-family: var(
         --cbp-font-mono,
+        ui-monospace,
+        'SFMono-Regular',
         'SF Mono',
-        'Monaco',
-        'Inconsolata',
-        'Fira Code',
-        'Droid Sans Mono',
-        'Source Code Pro',
+        'Cascadia Mono',
+        'Segoe UI Mono',
+        'Liberation Mono',
+        Menlo,
+        Monaco,
+        Consolas,
+        'Courier New',
         monospace
     );
 }
 
-.code-content code {
+.code-block-pro-wrapper .code-content pre code {
     display: block;
-    font-family: inherit;
+    font-family: var(
+        --cbp-font-mono,
+        ui-monospace,
+        'SFMono-Regular',
+        'SF Mono',
+        'Cascadia Mono',
+        'Segoe UI Mono',
+        'Liberation Mono',
+        Menlo,
+        Monaco,
+        Consolas,
+        'Courier New',
+        monospace
+    );
+    font-size: inherit;
+    line-height: inherit;
     background: transparent !important;
     color: var(--cbp-text);
     white-space: pre;

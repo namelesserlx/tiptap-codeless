@@ -1,6 +1,8 @@
 import type {} from './vite-env';
+import type {} from './types/tiptap-file-upload';
 
 export * from './types';
+export * from './config/normalizeOptions';
 
 // Extension
 export { FileUpload as default, FileUpload } from './extension/FileUploadExtension';

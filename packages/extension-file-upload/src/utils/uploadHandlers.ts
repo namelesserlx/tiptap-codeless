@@ -1,4 +1,12 @@
-import type { LocalStorageOptions, StorageMode, UploadHandler, UploadResult } from '../types';
+import type {
+    FileUploadStorageConfig,
+    StorageMode,
+    UploadHandler,
+    UploadResult,
+} from '../types';
+import type { DirectoryHandleStore } from '../runtime/dialogLifecycle';
+import { clearEditorDirectoryHandle } from '../runtime/dialogLifecycle';
+import type { Editor } from '@tiptap/core';
 import { getFileKind, safeFileName } from './file';
 
 // File System Access API 类型声明
@@ -31,6 +39,10 @@ export function createObjectUrlUpload(): UploadHandler {
                     name: file.name,
                     mimeType: file.type || 'application/octet-stream',
                     size: file.size,
+                    fileName: file.name,
+                    storageMode: 'memory',
+                    storageKey: null,
+                    revokeObjectURL: true,
                 };
             }),
         };
@@ -56,6 +68,9 @@ export function createBase64Upload(): UploadHandler {
                                 name: file.name,
                                 mimeType: file.type || 'application/octet-stream',
                                 size: file.size,
+                                fileName: file.name,
+                                storageMode: 'base64',
+                                storageKey: null,
                             });
                         };
                         reader.onerror = () => reject(reader.error);
@@ -68,14 +83,17 @@ export function createBase64Upload(): UploadHandler {
     };
 }
 
-// 用于缓存用户选择的目录句柄
-let cachedDirectoryHandle: FileSystemDirectoryHandle | null = null;
-
 /**
  * 创建本地文件系统上传处理器
  * 使用 File System Access API 将文件保存到用户选择的本地目录
  */
-export function createLocalStorageUpload(options?: LocalStorageOptions): UploadHandler {
+export function createLocalStorageUpload(
+    options?: Pick<
+        FileUploadStorageConfig,
+        'directoryHandle' | 'fileName' | 'alwaysAskDirectory'
+    >,
+    directoryHandleStore?: DirectoryHandleStore
+): UploadHandler {
     return async (files): Promise<UploadResult> => {
         // 检查 File System Access API 是否可用
         if (!('showDirectoryPicker' in window)) {
@@ -94,9 +112,9 @@ export function createLocalStorageUpload(options?: LocalStorageOptions): UploadH
 
         if (options?.directoryHandle) {
             dirHandle = options.directoryHandle;
-        } else if (!options?.alwaysAskDirectory && cachedDirectoryHandle) {
+        } else if (!options?.alwaysAskDirectory && directoryHandleStore?.get()) {
             // 复用之前选择的目录
-            dirHandle = cachedDirectoryHandle;
+            dirHandle = directoryHandleStore.get();
         } else {
             // 请求用户选择目录
             try {
@@ -105,7 +123,7 @@ export function createLocalStorageUpload(options?: LocalStorageOptions): UploadH
                     startIn: 'downloads',
                 });
                 // 缓存目录句柄以供后续使用
-                cachedDirectoryHandle = dirHandle;
+                directoryHandleStore?.set(dirHandle);
             } catch (err) {
                 // 用户取消选择或发生错误
                 if ((err as Error).name === 'AbortError') {
@@ -146,6 +164,10 @@ export function createLocalStorageUpload(options?: LocalStorageOptions): UploadH
                 name: savedName,
                 mimeType: file.type || 'application/octet-stream',
                 size: file.size,
+                fileName: savedName,
+                storageMode: 'local',
+                storageKey: savedName,
+                revokeObjectURL: true,
             })),
         };
     };
@@ -154,7 +176,12 @@ export function createLocalStorageUpload(options?: LocalStorageOptions): UploadH
 /**
  * @deprecated 请使用 createLocalStorageUpload 代替
  */
-export function createFileSystemAccessUpload(options?: LocalStorageOptions): UploadHandler {
+export function createFileSystemAccessUpload(
+    options?: Pick<
+        FileUploadStorageConfig,
+        'directoryHandle' | 'fileName' | 'alwaysAskDirectory'
+    >
+): UploadHandler {
     return createLocalStorageUpload(options);
 }
 
@@ -162,24 +189,23 @@ export function createFileSystemAccessUpload(options?: LocalStorageOptions): Upl
  * 根据存储模式创建对应的上传处理器
  */
 export function createUploadHandler(
-    mode: StorageMode,
+    storage: FileUploadStorageConfig,
     options?: {
-        localStorageOptions?: LocalStorageOptions;
-        customUpload?: UploadHandler;
+        directoryHandleStore?: DirectoryHandleStore;
     }
 ): UploadHandler {
-    switch (mode) {
+    switch (storage.mode as StorageMode) {
         case 'memory':
             return createObjectUrlUpload();
         case 'base64':
             return createBase64Upload();
         case 'local':
-            return createLocalStorageUpload(options?.localStorageOptions);
+            return createLocalStorageUpload(storage, options?.directoryHandleStore);
         case 'custom':
-            if (!options?.customUpload) {
-                throw new Error('Custom upload handler is required when storageMode is "custom".');
+            if (!storage.upload) {
+                throw new Error('Custom upload handler is required when storage.mode is "custom".');
             }
-            return options.customUpload;
+            return storage.upload;
         default:
             return createObjectUrlUpload();
     }
@@ -189,6 +215,6 @@ export function createUploadHandler(
  * 清除缓存的目录句柄
  * 调用此函数后，下次上传时会重新请求用户选择目录
  */
-export function clearCachedDirectoryHandle(): void {
-    cachedDirectoryHandle = null;
+export function clearCachedDirectoryHandle(editor?: Editor | null): void {
+    clearEditorDirectoryHandle(editor);
 }

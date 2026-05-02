@@ -13,28 +13,28 @@ export interface MacOSControlsProps {
  * MacOS 控制按钮组件
  */
 export const MacOSControls: React.FC<MacOSControlsProps> = React.memo(({ className }) => {
-    const { options, messages, deleteNode, getPos } = useConfigContext();
+    const { options, messages, isEditable, deleteNode, getPos } = useConfigContext();
 
     const { isCollapsed, isFullscreen, isCollapsible, toggleCollapse, handleFullscreen } =
         useStateContext();
 
     const {
-        showClose = true,
-        showCollapse = true,
-        showFullscreen = true,
-    } = options.macosControls || {};
+        close = true,
+        collapse = true,
+        fullscreen = true,
+    } = options.windowControls || {};
     // 处理关闭（仅在此组件使用）
     const handleClose = useCallback(() => {
         if (deleteNode) {
             deleteNode();
-        } else if (options.macosControls?.onClose) {
+        } else if (options.windowControls?.onClose) {
             // 这里不再传完整 node，只能传位置；如需 node，可在外部通过 getPos 重新获取
-            options.macosControls.onClose?.(undefined, getPos());
+            options.windowControls.onClose?.(undefined, getPos());
         }
-    }, [deleteNode, options.macosControls, getPos]);
+    }, [deleteNode, options.windowControls, getPos]);
     return (
         <div className={classNames('macos-controls', className)}>
-            {showClose && (
+            {close && isEditable && (
                 <button
                     type="button"
                     className="control-button close"
@@ -46,7 +46,7 @@ export const MacOSControls: React.FC<MacOSControlsProps> = React.memo(({ classNa
                 </button>
             )}
 
-            {showCollapse && isCollapsible && (
+            {collapse && isCollapsible && (
                 <button
                     type="button"
                     className={classNames('control-button collapse', {
@@ -64,7 +64,7 @@ export const MacOSControls: React.FC<MacOSControlsProps> = React.memo(({ classNa
                 </button>
             )}
 
-            {showFullscreen && (
+            {fullscreen && (
                 <button
                     type="button"
                     className="control-button fullscreen"

@@ -22,8 +22,8 @@ export type InsertMenuProps = Record<string, never>;
  * 通过 Context 获取所需状态和方法，保持组件独立性
  */
 export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
-    const { editor, pluginState } = useDragHandleContext();
-    const { visible, triggerRect, items, positionConfig, zIndex, emptyLabel, closeMenu } =
+    const { editor, pluginState, hostElement } = useDragHandleContext();
+    const { visible, triggerRect, items, positionConfig, zIndex, component, emptyLabel, closeMenu } =
         useInsertMenuContext();
 
     const nodeInfo = pluginState.currentNode;
@@ -37,6 +37,10 @@ export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
     const flatItems = useMemo(
         () => items.flatMap((item) => (isMenuGroup(item) ? item.items : [item])),
         [items]
+    );
+    const flatItemIndexMap = useMemo(
+        () => new Map(flatItems.map((item, index) => [item.id, index])),
+        [flatItems]
     );
 
     // 计算菜单位置
@@ -58,7 +62,11 @@ export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
             offset: positionConfig?.offset,
         });
 
-        setPosition({ x: pos.x, y: pos.y });
+        setPosition((previousPosition) =>
+            previousPosition.x === pos.x && previousPosition.y === pos.y
+                ? previousPosition
+                : { x: pos.x, y: pos.y }
+        );
     }, [visible, triggerRect, positionConfig?.placement, positionConfig?.offset]);
 
     // 点击外部关闭
@@ -85,7 +93,9 @@ export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
     // 重置 activeIndex（用 queueMicrotask 避免在 effect 内同步 setState 导致级联渲染）
     useEffect(() => {
         if (visible) {
-            queueMicrotask(() => setActiveIndex(0));
+            queueMicrotask(() => {
+                setActiveIndex((previousIndex) => (previousIndex === 0 ? previousIndex : 0));
+            });
         }
     }, [visible]);
 
@@ -127,7 +137,11 @@ export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
                     'tiptap-insert-menu__item--active': index === activeIndex,
                 })}
                 onClick={() => handleSelect(item)}
-                onMouseEnter={() => setActiveIndex(index)}
+                onMouseEnter={() =>
+                    setActiveIndex((previousIndex) =>
+                        previousIndex === index ? previousIndex : index
+                    )
+                }
             >
                 {item.icon && <span className="tiptap-insert-menu__item-icon">{item.icon}</span>}
                 <span className="tiptap-insert-menu__item-label">{item.label}</span>
@@ -142,6 +156,27 @@ export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
     // 不可见时不渲染
     if (!visible) {
         return null;
+    }
+
+    if (!hostElement) {
+        return null;
+    }
+
+    if (component) {
+        const CustomComponent = component;
+
+        return createPortal(
+            <CustomComponent
+                items={items}
+                visible={visible}
+                triggerRect={triggerRect}
+                placement={positionConfig?.placement}
+                offset={positionConfig?.offset}
+                zIndex={zIndex}
+                onClose={closeMenu}
+            />,
+            hostElement
+        );
     }
 
     return createPortal(
@@ -174,14 +209,16 @@ export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
                                     )}
                                     <div className="tiptap-insert-menu__group-list">
                                         {itemOrGroup.items.map((item) => {
-                                            const flatIndex = flatItems.findIndex(
-                                                (i) => i.id === item.id
-                                            );
+                                            const flatIndex = flatItemIndexMap.get(item.id) ?? -1;
                                             const button = renderItem(item, flatIndex);
 
                                             if (itemOrGroup.id === 'basic') {
                                                 return (
-                                                    <Tooltip key={item.id} content={item.label}>
+                                                    <Tooltip
+                                                        key={item.id}
+                                                        content={item.label}
+                                                        portalTarget={hostElement}
+                                                    >
                                                         {button}
                                                     </Tooltip>
                                                 );
@@ -202,7 +239,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
                             <React.Fragment key={itemOrGroup.id}>
                                 {renderItem(
                                     itemOrGroup,
-                                    flatItems.findIndex((i) => i.id === itemOrGroup.id)
+                                    flatItemIndexMap.get(itemOrGroup.id) ?? -1
                                 )}
                             </React.Fragment>
                         );
@@ -212,7 +249,7 @@ export const InsertMenu: React.FC<InsertMenuProps> = memo(() => {
                 )}
             </div>
         </div>,
-        document.body
+        hostElement
     );
 });
 

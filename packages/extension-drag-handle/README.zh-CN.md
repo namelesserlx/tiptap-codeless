@@ -3,7 +3,7 @@
 Tiptap 拖拽手柄扩展：支持拖拽排序块、插入菜单。
 
 - [English](README.md)
-- [中文](docs.zh-CN.md) (当前)
+- [中文](README.zh-CN.md) (当前)
 
 ---
 
@@ -41,7 +41,8 @@ const editor = useEditor({
     extensions: [
         StarterKit,
         DragHandle.configure({
-            insertMenu: { enabled: true, triggerOnSlash: true },
+            locale: 'zh-CN',
+            insertMenu: { enabled: true, trigger: '/' },
             drag: { enabled: true },
         }),
     ],
@@ -56,32 +57,84 @@ function App() {
 
 ## ⚙️ 配置选项
 
+### 共享国际化配置
+
+```ts
+DragHandle.configure({
+    locale: 'ja',
+    messages: {
+        insertMenu: {
+            groups: {
+                basic: '基本',
+            },
+        },
+    },
+    insertMenu: {
+        zIndex: 2400,
+    },
+});
+```
+
+### 手柄图标自定义
+
+```tsx
+DragHandle.configure({
+    handle: {
+        icons: {
+            insert: <PlusCircleIcon />,
+            drag: <GripVerticalIcon />,
+        },
+    },
+});
+```
+
 | 选项               | 类型                                                               | 默认值                                | 描述                               |
 | ------------------ | ------------------------------------------------------------------ | ------------------------------------- | ---------------------------------- |
+| `locale`           | `'zh-CN' \| 'zh-TW' \| 'en' \| 'ja'`                               | `'zh-CN'`                             | 内置 UI 语言                       |
+| `messages`         | `DeepPartial<DragHandleMessages>`                                  | `{}`                                  | 覆盖内置菜单文案                   |
 | `offset`           | `{ x?: number; y?: number }`                                       | `{ x: -32, y: 0 }`                    | 手柄相对块的偏移                   |
+| `handle`           | `{ width?, height?, hoverDelay?, hideDelay?, zIndex?, iconSize?, icons? }` | `{ width: 24, height: 24, ... }` | 手柄尺寸、延迟和自定义图标         |
 | `insertMenu`       | `InsertMenuConfig`                                                 | 见下表                                | 插入菜单与斜杠触发                 |
-| `drag`             | `{ enabled?: boolean; dragOpacity?: number }`                      | `{ enabled: true, dragOpacity: 0.5 }` | 拖拽行为                           |
-| `handleStyle`      | `{ width?, height?, hoverDelay?, hideDelay?, zIndex?, iconSize? }` | `{ width: 24, height: 24, ... }`      | 手柄尺寸与显示/隐藏延迟            |
-| `excludeNodes`     | `string[]`                                                         | `[]`                                  | 不显示手柄的节点类型               |
-| `includeOnlyNodes` | `string[]`                                                         | `undefined`                           | 若设置，仅在这些节点类型上显示手柄 |
-| `element`          | `{ insert?; drag? }`                                               | -                                     | 自定义插入/拖拽手柄元素            |
-| `onDragStart`      | `(info, event) => void`                                            | -                                     | 拖拽开始回调                       |
-| `onDragEnd`        | `(info \| null, event) => void`                                    | -                                     | 拖拽结束回调                       |
-| `onNodeChange`     | `(info \| null) => void`                                           | -                                     | 当前节点变化回调                   |
-| `onInsertClick`    | `(info, event) => void`                                            | -                                     | 点击插入按钮回调                   |
+| `drag`             | `{ enabled?: boolean; opacity?: number }`                          | `{ enabled: true, opacity: 0.5 }`     | 拖拽行为                           |
+| `nodes`            | `{ include?: string[]; exclude?: string[] }`                       | `{ include: undefined, exclude: [] }` | 控制哪些节点显示手柄               |
+| `events`           | `{ onDragStart?, onDragEnd?, onNodeChange?, onInsertClick? }`      | `{}`                                  | 运行时生命周期回调                 |
 
 ### 插入菜单配置
 
 | 选项             | 类型                                    | 默认值      | 描述                                      |
 | ---------------- | --------------------------------------- | ----------- | ----------------------------------------- |
-| `enabled`        | `boolean`                               | `true`      | 是否启用插入菜单                          |
-| `triggerOnInput` | `boolean`                               | -           | 是否在输入时打开（如空块时）              |
-| `trigger`        | `string \| RegExp`                      | -           | 触发文本（如 `'/'`）或正则                |
-| `triggerOnSlash` | `boolean`                               | `true`      | 已废弃：请用 `triggerOnInput` + `trigger` |
+| `enabled`        | `boolean`                               | `true`      | 是否启用插入菜单 UI。设为 `false` 时，空块插入按钮和斜杠触发都会关闭 |
+| `trigger`        | `string \| RegExp \| false`             | `'/'`       | 触发文本（如 `'/'`）或正则。设为 `false` 时，仅关闭斜杠触发，保留插入按钮 |
 | `items`          | `(InsertMenuItem \| InsertMenuGroup)[]` | -           | 菜单项或分组                              |
-| `itemsMode`      | `'replace' \| 'merge'`                  | `'replace'` | replace：仅用你的项；merge：与默认合并    |
-| `custom`         | `ComponentType<InsertMenuProps>`        | -           | 自定义菜单组件                            |
-| `position`       | `{ placement?; offset? }`               | -           | 菜单位置：right \| left \| bottom \| top  |
+| `strategy`       | `'replace' \| 'merge'`                  | `'replace'` | replace：仅用你的项；merge：与默认合并    |
+| `component`      | `ComponentType<InsertMenuProps>`        | -           | 自定义菜单组件                            |
+| `placement`      | `'right' \| 'left' \| 'bottom' \| 'top'` | `'left'`   | 菜单优先位置                              |
+| `offset`         | `{ x?: number; y?: number }`            | `{ x: 0, y: 0 }` | 菜单附加偏移量                        |
+| `zIndex`         | `number`                                | `1000`      | 菜单层级                                  |
+
+---
+
+## 🔒 只读模式
+
+`DragHandle` 跟随 Tiptap 编辑器级别的只读状态，不需要在扩展里额外配置 `readonly` 选项。
+
+```tsx
+const editor = useEditor({
+    editable: false,
+    extensions: [StarterKit, DragHandle],
+});
+
+// 运行时切换
+editor?.setEditable(false);
+editor?.setEditable(true);
+```
+
+编辑器处于只读状态时：
+
+- 拖拽手柄会隐藏或禁用，不允许拖拽排序块。
+- 拖拽 / 放置处理会 no-op / 返回 `false`。
+- 斜杠触发的插入菜单和插入手柄动作会禁用，因为它们会修改文档。
+- `lockDragHandle`、`unlockDragHandle`、`hideDragHandle` 等联动命令仍可安全调用，它们只影响手柄 UI 状态。
 
 ---
 
@@ -128,10 +181,9 @@ DragHandle.configure({
     insertMenu: {
         enabled: true,
         trigger: '/',
-        triggerOnInput: true,
-        itemsMode: 'merge', // 与默认菜单项合并
+        strategy: 'merge', // 与默认菜单项合并
         items: customItems,
-        position: { placement: 'right' },
+        placement: 'right',
     },
 });
 ```
@@ -145,25 +197,28 @@ DragHandle.configure({
 ```ts
 DragHandle.configure({
     offset: { x: -32, y: 0 },
+    handle: {
+        width: 24,
+        height: 24,
+        hoverDelay: 0,
+        hideDelay: 100,
+        icons: {},
+    },
     insertMenu: {
         enabled: true,
-        triggerOnInput: true,
         trigger: '/',
-        position: { placement: 'right' },
-        itemsMode: 'merge',
+        placement: 'right',
+        strategy: 'merge',
         items: customItems,
+        zIndex: 2400,
     },
     drag: {
         enabled: true,
-        dragOpacity: 0.5,
+        opacity: 0.5,
     },
-    handleStyle: {
-        width: 24,
-        height: 24,
-        hoverDelay: 50,
-        hideDelay: 100,
+    nodes: {
+        exclude: [],
     },
-    excludeNodes: [],
 });
 ```
 

@@ -5,6 +5,8 @@
 import type { EditorView } from '@tiptap/pm/view';
 import type { CurrentNodeInfo, DragHandleOptions } from '../types';
 
+const CENTER_ALIGNED_NODE_TYPES = new Set(['paragraph', 'heading']);
+
 /**
  * 手柄位置信息
  */
@@ -26,17 +28,15 @@ export function calculateHandlePosition(
     options: DragHandleOptions
 ): HandlePosition {
     const { rect, node } = nodeInfo;
-    const editorRect = view.dom.getBoundingClientRect();
-    const parentRect = view.dom.parentElement?.getBoundingClientRect() || editorRect;
+    const parentRect =
+        view.dom.parentElement?.getBoundingClientRect() ?? view.dom.getBoundingClientRect();
 
     const offsetX = options.offset?.x ?? -32;
     const offsetY = options.offset?.y ?? 0;
     const nodeType = node.type?.name;
-    const centerAlignedTypes = new Set(['paragraph', 'heading']);
-    const isCenterAligned = centerAlignedTypes.has(nodeType);
+    const isCenterAligned = CENTER_ALIGNED_NODE_TYPES.has(nodeType);
     const left = rect.left + offsetX;
-    const centerTop =
-        rect.top + rect.height / 2 - (options.handleStyle?.height ?? 24) / 2 + offsetY;
+    const centerTop = rect.top + rect.height / 2 - (options.handle?.height ?? 24) / 2 + offsetY;
     const firstLineTop = rect.top + offsetY;
     const top = isCenterAligned ? centerTop : firstLineTop;
 

@@ -13,6 +13,8 @@ export interface DragHandleContextValue {
     options: DragHandleOptions;
     /** 插件状态 */
     pluginState: DragHandlePluginState;
+    /** UI Portal 宿主 */
+    hostElement: HTMLElement | null;
 }
 
 const DragHandleContext = createContext<DragHandleContextValue | null>(null);
@@ -22,6 +24,7 @@ export interface DragHandleProviderProps {
     editor: Editor;
     options: DragHandleOptions;
     pluginState: DragHandlePluginState;
+    hostElement: HTMLElement | null;
 }
 
 /**
@@ -33,8 +36,12 @@ export const DragHandleProvider: React.FC<DragHandleProviderProps> = ({
     editor,
     options,
     pluginState,
+    hostElement,
 }) => {
-    const value = useMemo(() => ({ editor, options, pluginState }), [editor, options, pluginState]);
+    const value = useMemo(
+        () => ({ editor, options, pluginState, hostElement }),
+        [editor, options, pluginState, hostElement]
+    );
 
     return <DragHandleContext.Provider value={value}>{children}</DragHandleContext.Provider>;
 };

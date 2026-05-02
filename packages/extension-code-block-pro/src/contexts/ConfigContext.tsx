@@ -43,6 +43,21 @@ export interface ConfigContextValue {
     updateAttributes: (attrs: Partial<CodeBlockAttributes>) => void;
 
     /**
+     * 当前编辑器是否可编辑
+     */
+    isEditable: boolean;
+
+    /**
+     * 是否显示 Mermaid 图表查看态
+     */
+    showMermaidDiagram: boolean;
+
+    /**
+     * 切换 Mermaid 图表查看态
+     */
+    toggleMermaidDiagram: () => void;
+
+    /**
      * 删除节点
      */
     deleteNode?: () => void;

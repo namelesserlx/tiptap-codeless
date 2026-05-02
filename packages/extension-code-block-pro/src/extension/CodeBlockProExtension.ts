@@ -3,76 +3,13 @@ import type { ReactNodeViewProps } from '@tiptap/react';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import type React from 'react';
 import { CodeBlockView } from '@/components/CodeBlockView';
-import type { CodeBlockProOptions, LanguageConfig } from '@/types';
-// 默认语言配置
-const defaultLanguages: LanguageConfig[] = [
-    { value: 'javascript', label: 'JavaScript', aliases: ['js'] },
-    { value: 'typescript', label: 'TypeScript', aliases: ['ts'] },
-    { value: 'python', label: 'Python', aliases: ['py'] },
-    { value: 'java', label: 'Java' },
-    { value: 'cpp', label: 'C++', aliases: ['c++'] },
-    { value: 'c', label: 'C' },
-    { value: 'csharp', label: 'C#', aliases: ['cs'] },
-    { value: 'go', label: 'Go', aliases: ['golang'] },
-    { value: 'rust', label: 'Rust', aliases: ['rs'] },
-    { value: 'php', label: 'PHP' },
-    { value: 'ruby', label: 'Ruby', aliases: ['rb'] },
-    { value: 'swift', label: 'Swift' },
-    { value: 'kotlin', label: 'Kotlin', aliases: ['kt'] },
-    { value: 'html', label: 'HTML', aliases: ['xml'] },
-    { value: 'css', label: 'CSS' },
-    { value: 'scss', label: 'SCSS', aliases: ['sass'] },
-    { value: 'less', label: 'Less' },
-    { value: 'json', label: 'JSON' },
-    { value: 'yaml', label: 'YAML', aliases: ['yml'] },
-    { value: 'markdown', label: 'Markdown', aliases: ['md'] },
-    { value: 'bash', label: 'Bash', aliases: ['sh', 'shell'] },
-    { value: 'sql', label: 'SQL' },
-    { value: 'graphql', label: 'GraphQL', aliases: ['gql'] },
-    { value: 'dockerfile', label: 'Dockerfile', aliases: ['docker'] },
-    { value: 'mermaid', label: 'Mermaid', aliases: ['mmd', 'mid'] },
-];
-
-const defaultOptions: CodeBlockProOptions = {
-    locale: 'zh-CN',
-    messages: {},
-    languages: defaultLanguages,
-    defaultLanguage: null,
-    theme: 'auto',
-    macosControls: {
-        showClose: true,
-        showCollapse: true,
-        showFullscreen: true,
-    },
-    toolbar: {
-        showLanguageSelector: true,
-        showCopyButton: true,
-        showLineNumbersToggle: true,
-    },
-    lineNumbers: {
-        enabled: true,
-        startLine: 1,
-        toggleable: true,
-    },
-    collapse: {
-        enabled: true,
-        defaultCollapsed: false,
-        collapsedLines: 3,
-    },
-    lazyRender: {
-        enabled: false, // 默认禁用，用户按需启用
-        rootMargin: '100px', // 提前 100px 开始渲染
-        placeholderHeight: 100, // 占位符高度
-    },
-    HTMLAttributes: {
-        class: 'code-block-pro',
-    },
-    ui: {
-        languageDropdown: {
-            zIndex: 1000,
-        },
-    },
-};
+import {
+    defaultCodeBlockProOptions,
+    normalizeCodeBlockProOptions,
+} from '@/config/normalizeOptions';
+import { findSelectedNodeByName } from '@/extension/attrs';
+import { parseLanguageAttribute, renderLanguageAttribute } from '@/extension/languageAttributes';
+import type { CodeBlockProOptions } from '@/types';
 
 declare module '@tiptap/core' {
     interface Commands<ReturnType> {
@@ -111,53 +48,22 @@ export const CodeBlockPro = CodeBlockLowlight.extend<CodeBlockProOptions>({
     addOptions() {
         return {
             ...this.parent?.(),
-            ...defaultOptions,
+            ...defaultCodeBlockProOptions,
         };
     },
 
     addAttributes() {
+        const options = normalizeCodeBlockProOptions(this.options);
+
         return {
             ...this.parent?.(),
             language: {
-                default: this.options.defaultLanguage,
-                parseHTML: (element) => {
-                    // 优先从 data-language 属性读取
-                    const dataLanguage = element.getAttribute('data-language');
-                    if (dataLanguage) {
-                        return dataLanguage;
-                    }
-
-                    // 从 class 属性中提取语言（支持 language-* 格式）
-                    const classList = element.className || '';
-                    const languageMatch = classList.match(/language-(\w+)/);
-                    if (languageMatch) {
-                        return languageMatch[1];
-                    }
-
-                    // 从子元素 <code> 的 class 中提取语言
-                    const codeElement = element.querySelector('code');
-                    if (codeElement) {
-                        const codeClassList = codeElement.className || '';
-                        const codeLanguageMatch = codeClassList.match(/language-(\w+)/);
-                        if (codeLanguageMatch) {
-                            return codeLanguageMatch[1];
-                        }
-                    }
-
-                    return this.options.defaultLanguage;
-                },
-                renderHTML: (attributes) => {
-                    if (!attributes.language) {
-                        return {};
-                    }
-                    return {
-                        'data-language': attributes.language,
-                        class: `language-${attributes.language}`,
-                    };
-                },
+                default: options.defaultLanguage,
+                parseHTML: (element) => parseLanguageAttribute(element, options.defaultLanguage),
+                renderHTML: (attributes) => renderLanguageAttribute(attributes.language),
             },
             collapsed: {
-                default: this.options.collapse?.defaultCollapsed ?? false,
+                default: options.collapse.defaultCollapsed ?? false,
                 parseHTML: (element) => element.getAttribute('data-collapsed') === 'true',
                 renderHTML: (attributes) => {
                     return {
@@ -166,7 +72,7 @@ export const CodeBlockPro = CodeBlockLowlight.extend<CodeBlockProOptions>({
                 },
             },
             showLineNumbers: {
-                default: this.options.lineNumbers?.enabled ?? true,
+                default: options.lineNumbers.enabled ?? true,
                 parseHTML: (element) => element.getAttribute('data-line-numbers') === 'true',
                 renderHTML: (attributes) => {
                     return {
@@ -184,7 +90,7 @@ export const CodeBlockPro = CodeBlockLowlight.extend<CodeBlockProOptions>({
                 },
             },
             theme: {
-                default: this.options.theme,
+                default: options.theme,
                 parseHTML: (element: HTMLElement) => element.getAttribute('data-theme'),
                 renderHTML: (attributes) => {
                     return {
@@ -206,28 +112,31 @@ export const CodeBlockPro = CodeBlockLowlight.extend<CodeBlockProOptions>({
             ...this.parent?.(),
             setCodeBlock:
                 (attributes) =>
-                ({ commands }) => {
+                ({ editor, commands }) => {
+                    if (!editor.isEditable) return false;
                     return commands.setNode(this.name, attributes);
                 },
             toggleCodeBlock:
                 (attributes) =>
-                ({ commands }) => {
+                ({ editor, commands }) => {
+                    if (!editor.isEditable) return false;
                     return commands.toggleNode(this.name, 'paragraph', attributes);
                 },
             updateCodeBlockLanguage:
                 (language) =>
-                ({ commands }) => {
+                ({ editor, commands }) => {
+                    if (!editor.isEditable) return false;
                     return commands.updateAttributes(this.name, { language });
                 },
             toggleCodeBlockCollapse:
                 () =>
-                ({ commands, state }) => {
-                    const { selection } = state;
-                    const node = state.doc.nodeAt(selection.from);
+                ({ editor, commands, state }) => {
+                    if (!editor.isEditable) return false;
+                    const match = findSelectedNodeByName(state.selection, this.name);
 
-                    if (node?.type.name === this.name) {
+                    if (match) {
                         return commands.updateAttributes(this.name, {
-                            collapsed: !node.attrs.collapsed,
+                            collapsed: !match.node.attrs.collapsed,
                         });
                     }
 
@@ -235,13 +144,13 @@ export const CodeBlockPro = CodeBlockLowlight.extend<CodeBlockProOptions>({
                 },
             toggleCodeBlockLineNumbers:
                 () =>
-                ({ commands, state }) => {
-                    const { selection } = state;
-                    const node = state.doc.nodeAt(selection.from);
+                ({ editor, commands, state }) => {
+                    if (!editor.isEditable) return false;
+                    const match = findSelectedNodeByName(state.selection, this.name);
 
-                    if (node?.type.name === this.name) {
+                    if (match) {
                         return commands.updateAttributes(this.name, {
-                            showLineNumbers: !node.attrs.showLineNumbers,
+                            showLineNumbers: !match.node.attrs.showLineNumbers,
                         });
                     }
 

@@ -6,6 +6,29 @@ import type { Node } from '@tiptap/pm/model';
 import type { EditorView } from '@tiptap/pm/view';
 import type { CurrentNodeInfo } from '../types';
 
+interface CachedOuterNodeLookup {
+    doc: Node;
+    entries: WeakMap<HTMLElement, { node: Node; pos: number }>;
+}
+
+const outerNodeLookupCache = new WeakMap<EditorView, CachedOuterNodeLookup>();
+
+function getOuterNodeLookupCache(view: EditorView): CachedOuterNodeLookup {
+    const currentDoc = view.state.doc;
+    const cached = outerNodeLookupCache.get(view);
+
+    if (cached && cached.doc === currentDoc) {
+        return cached;
+    }
+
+    const nextCache = {
+        doc: currentDoc,
+        entries: new WeakMap<HTMLElement, { node: Node; pos: number }>(),
+    };
+    outerNodeLookupCache.set(view, nextCache);
+    return nextCache;
+}
+
 /**
  * 获取顶层块节点和位置（合并函数，避免重复调用 doc.resolve）
  */
@@ -103,6 +126,18 @@ function getNodeInfoFromElement(view: EditorView, element: HTMLElement): Current
     }
 
     try {
+        const cache = getOuterNodeLookupCache(view);
+        const cachedOuterNode = cache.entries.get(domNode);
+        if (cachedOuterNode) {
+            return {
+                node: cachedOuterNode.node,
+                pos: cachedOuterNode.pos,
+                dom: domNode,
+                isEmpty: isNodeEmpty(cachedOuterNode.node),
+                rect: domNode.getBoundingClientRect(),
+            };
+        }
+
         let targetNode: Node | null = null;
         let targetNodePos = -1;
 
@@ -139,6 +174,11 @@ function getNodeInfoFromElement(view: EditorView, element: HTMLElement): Current
         if (!targetNode || targetNodePos === -1) {
             return null;
         }
+
+        cache.entries.set(domNode, {
+            node: targetNode,
+            pos: targetNodePos,
+        });
 
         return {
             node: targetNode,
@@ -258,19 +298,21 @@ export function findElementNearCoords(
  */
 export function shouldShowHandle(
     node: Node,
-    excludeNodes?: string[],
-    includeOnlyNodes?: string[]
+    nodes?: {
+        include?: string[];
+        exclude?: string[];
+    }
 ): boolean {
     const typeName = node.type.name;
 
     // 如果指定了包含列表，只有在列表中的才显示
-    if (includeOnlyNodes && includeOnlyNodes.length > 0) {
-        return includeOnlyNodes.includes(typeName);
+    if (nodes?.include && nodes.include.length > 0) {
+        return nodes.include.includes(typeName);
     }
 
     // 如果指定了排除列表，在列表中的不显示
-    if (excludeNodes && excludeNodes.length > 0) {
-        return !excludeNodes.includes(typeName);
+    if (nodes?.exclude && nodes.exclude.length > 0) {
+        return !nodes.exclude.includes(typeName);
     }
 
     return true;

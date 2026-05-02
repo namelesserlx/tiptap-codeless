@@ -1,7 +1,8 @@
 import type { NodeViewProps } from '@tiptap/react';
 import { NodeViewWrapper } from '@tiptap/react';
 import classNames from 'classnames';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useResolvedAssetUrl } from '@/hooks/useResolvedAssetUrl';
 import { formatBytes } from '../utils/file';
 
 // 下载图标组件
@@ -41,6 +42,18 @@ const FileTypeIcon: React.FC<{ mimeType?: string }> = ({ mimeType }) => {
 };
 
 export const FileCardView: React.FC<NodeViewProps> = ({ node, selected, editor }) => {
+    const isEditable = useSyncExternalStore(
+        (callback) => {
+            if (!editor || typeof editor.on !== 'function') {
+                return () => {};
+            }
+            editor.on('update', callback);
+            return () => {
+                editor.off('update', callback);
+            };
+        },
+        () => editor?.isEditable ?? true
+    );
     const storageMessages = (editor?.storage?.fileUpload?.messages ?? undefined) as
         | {
               fileCard?: {
@@ -56,7 +69,16 @@ export const FileCardView: React.FC<NodeViewProps> = ({ node, selected, editor }
         name: string;
         mimeType: string;
         size: number;
+        fileName?: string | null;
+        storageMode?: 'memory' | 'base64' | 'local' | 'custom' | null;
+        storageKey?: string | null;
     };
+    const resolvedUrl = useResolvedAssetUrl(editor ?? null, {
+        url: attrs.url,
+        fileName: attrs.fileName,
+        storageMode: attrs.storageMode ?? undefined,
+        storageKey: attrs.storageKey,
+    });
     const unnamedFileLabel =
         storageMessages?.fileCard?.unnamedFile ?? storageMessages?.unnamedFile ?? '未命名文件';
     const downloadFileLabel =
@@ -76,21 +98,21 @@ export const FileCardView: React.FC<NodeViewProps> = ({ node, selected, editor }
 
             // 创建临时链接并触发下载
             const link = document.createElement('a');
-            link.href = attrs.url;
+            link.href = resolvedUrl;
             link.download = attrs.name || 'download';
             link.target = '_blank';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         },
-        [attrs.url, attrs.name]
+        [attrs.name, resolvedUrl]
     );
 
     return (
-        <NodeViewWrapper className="tiptap-upload-file">
+        <NodeViewWrapper className="tiptap-upload-file" draggable={isEditable}>
             <div
                 className={classNames('tiptap-upload-file__card', {
-                    'tiptap-upload-file__card--selected': selected,
+                    'tiptap-upload-file__card--selected': selected && isEditable,
                 })}
             >
                 <div className="tiptap-upload-file__icon" aria-hidden="true">

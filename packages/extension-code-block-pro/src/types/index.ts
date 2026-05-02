@@ -3,6 +3,8 @@
  */
 
 import type { DeepPartial, SupportedLocale } from '@tiptap-codeless/core';
+import type { Editor } from '@tiptap/core';
+import type { CodeBlockLowlightOptions } from '@tiptap/extension-code-block-lowlight';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import type { CodeBlockProMessages } from '@/i18n';
 
@@ -32,23 +34,23 @@ export interface LanguageConfig {
 }
 
 /**
- * MacOS 控制按钮配置
+ * 窗口控制按钮配置
  */
-export interface MacOSControlsConfig {
+export interface WindowControlsConfig {
     /**
      * 是否显示关闭按钮
      */
-    showClose?: boolean;
+    close?: boolean;
 
     /**
      * 是否显示折叠按钮
      */
-    showCollapse?: boolean;
+    collapse?: boolean;
 
     /**
      * 是否显示全屏按钮
      */
-    showFullscreen?: boolean;
+    fullscreen?: boolean;
 
     /**
      * 关闭按钮点击回调（node 在 NodeView 外可能不可用，传 undefined）
@@ -68,17 +70,17 @@ export interface ToolbarConfig {
     /**
      * 是否显示语言选择器
      */
-    showLanguageSelector?: boolean;
+    language?: boolean;
 
     /**
      * 是否显示复制按钮
      */
-    showCopyButton?: boolean;
+    copy?: boolean;
 
     /**
      * 是否显示行号切换按钮
      */
-    showLineNumbersToggle?: boolean;
+    lineNumbers?: boolean;
 }
 
 /**
@@ -93,12 +95,12 @@ export interface LineNumbersConfig {
     /**
      * 起始行号
      */
-    startLine?: number;
+    start?: number;
 
     /**
      * 是否可切换
      */
-    toggleable?: boolean;
+    allowToggle?: boolean;
 }
 
 /**
@@ -118,18 +120,18 @@ export interface CollapseConfig {
     /**
      * 折叠时显示的行数
      */
-    collapsedLines?: number;
+    visibleLines?: number;
 }
 
 /**
  * 延迟渲染配置
  */
-export interface LazyRenderConfig {
+export interface RenderingConfig {
     /**
      * 是否启用延迟渲染
      * 启用后，只有当代码块进入视口时才会渲染完整内容
      */
-    enabled?: boolean;
+    lazy?: boolean;
 
     /**
      * 提前渲染的距离（像素）
@@ -162,7 +164,7 @@ export interface CodeBlockProOptions {
     /**
      * Lowlight 实例（用于语法高亮）
      */
-    lowlight?: unknown;
+    lowlight?: CodeBlockLowlightOptions['lowlight'];
 
     /**
      * 支持的语言列表
@@ -180,9 +182,9 @@ export interface CodeBlockProOptions {
     theme?: CodeBlockTheme;
 
     /**
-     * MacOS 控制按钮配置
+     * 窗口控制按钮配置
      */
-    macosControls?: MacOSControlsConfig;
+    windowControls?: WindowControlsConfig;
 
     /**
      * 工具栏配置
@@ -203,12 +205,7 @@ export interface CodeBlockProOptions {
      * 延迟渲染配置
      * 用于优化大量代码块时的性能
      */
-    lazyRender?: LazyRenderConfig;
-
-    /**
-     * 自定义 CSS 类名
-     */
-    className?: string;
+    rendering?: RenderingConfig;
 
     /**
      * HTML 属性
@@ -219,8 +216,8 @@ export interface CodeBlockProOptions {
      * UI 配置
      */
     ui?: {
-        languageDropdown?: {
-            zIndex?: number;
+        layers?: {
+            languageDropdown?: number;
         };
     };
 }
@@ -285,6 +282,11 @@ export interface CodeBlockViewProps {
      * 扩展实例（含 options）
      */
     extension: { name: string; options: CodeBlockProOptions };
+
+    /**
+     * 编辑器实例
+     */
+    editor?: Pick<Editor, 'isEditable' | 'view' | 'on' | 'off'>;
 
     /**
      * 删除节点

@@ -3,7 +3,7 @@
 增强版代码块扩展，为 Tiptap 提供 macOS 风格外观、语法高亮、Mermaid 图表和丰富的编辑体验。
 
 - [English](README.md)
-- [中文](docs.zh-CN.md) (当前)
+- [中文](README.zh-CN.md) (当前)
 
 ---
 
@@ -127,30 +127,55 @@ sequenceDiagram
 | `languages`                     | `LanguageConfig[]`            | `defaultLanguages`                                                                  | 语言选择器中的可用语言列表                         |
 | `defaultLanguage`               | `string \| null`              | `null`                                                                              | 新建代码块的默认语言                               |
 | `theme`                         | `'light' \| 'dark' \| 'auto'` | `'auto'`                                                                            | 主题模式                                           |
-| `macosControls`                 | `MacOSControlsConfig`         | `{ showClose: true, showCollapse: true, showFullscreen: true }`                     | macOS 风格头部控制按钮配置                         |
-| `macosControls.showClose`       | `boolean`                     | `true`                                                                              | 显示关闭按钮                                       |
-| `macosControls.showCollapse`    | `boolean`                     | `true`                                                                              | 显示折叠按钮                                       |
-| `macosControls.showFullscreen`  | `boolean`                     | `true`                                                                              | 显示全屏按钮                                       |
-| `macosControls.onClose`         | `(node, pos) => void`         | `undefined`                                                                         | 关闭按钮点击回调                                   |
-| `macosControls.onFullscreen`    | `(node, pos) => void`         | `undefined`                                                                         | 全屏按钮点击回调                                   |
-| `toolbar`                       | `ToolbarConfig`               | `{ showLanguageSelector: true, showCopyButton: true, showLineNumbersToggle: true }` | 工具栏配置                                         |
-| `toolbar.showLanguageSelector`  | `boolean`                     | `true`                                                                              | 显示语言选择器                                     |
-| `toolbar.showCopyButton`        | `boolean`                     | `true`                                                                              | 显示复制按钮                                       |
-| `toolbar.showLineNumbersToggle` | `boolean`                     | `true`                                                                              | 显示行号切换按钮                                   |
-| `lineNumbers`                   | `LineNumbersConfig`           | `{ enabled: true, startLine: 1, toggleable: true }`                                 | 行号配置                                           |
+| `windowControls`                | `WindowControlsConfig`        | `{ close: true, collapse: true, fullscreen: true }`                                 | macOS 风格头部控制按钮配置                         |
+| `windowControls.close`          | `boolean`                     | `true`                                                                              | 显示关闭按钮                                       |
+| `windowControls.collapse`       | `boolean`                     | `true`                                                                              | 显示折叠按钮                                       |
+| `windowControls.fullscreen`     | `boolean`                     | `true`                                                                              | 显示全屏按钮                                       |
+| `windowControls.onClose`        | `(node, pos) => void`         | `undefined`                                                                         | 关闭按钮点击回调                                   |
+| `windowControls.onFullscreen`   | `(node, pos) => void`         | `undefined`                                                                         | 全屏按钮点击回调                                   |
+| `toolbar`                       | `ToolbarConfig`               | `{ language: true, copy: true, lineNumbers: true }`                                 | 工具栏配置                                         |
+| `toolbar.language`              | `boolean`                     | `true`                                                                              | 显示语言选择器                                     |
+| `toolbar.copy`                  | `boolean`                     | `true`                                                                              | 显示复制按钮                                       |
+| `toolbar.lineNumbers`           | `boolean`                     | `true`                                                                              | 显示行号切换按钮                                   |
+| `lineNumbers`                   | `LineNumbersConfig`           | `{ enabled: true, start: 1, allowToggle: true }`                                    | 行号配置                                           |
 | `lineNumbers.enabled`           | `boolean`                     | `true`                                                                              | 默认显示行号                                       |
-| `lineNumbers.startLine`         | `number`                      | `1`                                                                                 | 起始行号                                           |
-| `lineNumbers.toggleable`        | `boolean`                     | `true`                                                                              | 允许切换行号显示                                   |
-| `collapse`                      | `CollapseConfig`              | `{ enabled: true, defaultCollapsed: false, collapsedLines: 3 }`                     | 代码折叠配置                                       |
+| `lineNumbers.start`             | `number`                      | `1`                                                                                 | 起始行号                                           |
+| `lineNumbers.allowToggle`       | `boolean`                     | `true`                                                                              | 允许切换行号显示                                   |
+| `collapse`                      | `CollapseConfig`              | `{ enabled: true, defaultCollapsed: false, visibleLines: 3 }`                       | 代码折叠配置                                       |
 | `collapse.enabled`              | `boolean`                     | `true`                                                                              | 启用代码折叠                                       |
 | `collapse.defaultCollapsed`     | `boolean`                     | `false`                                                                             | 默认折叠状态                                       |
-| `collapse.collapsedLines`       | `number`                      | `3`                                                                                 | 折叠时显示的行数                                   |
-| `lazyRender`                    | `LazyRenderConfig`            | `{ enabled: false, rootMargin: '100px', placeholderHeight: 100 }`                   | 延迟渲染配置（多代码块时优化性能）                 |
-| `lazyRender.enabled`            | `boolean`                     | `false`                                                                             | 是否启用延迟渲染（仅进入视口时渲染）               |
-| `lazyRender.rootMargin`         | `string`                      | `'100px'`                                                                           | IntersectionObserver 边距（如提前 100px 开始渲染） |
-| `lazyRender.placeholderHeight`  | `number`                      | `100`                                                                               | 占位符高度（px），内容未渲染前显示                 |
-| `className`                     | `string`                      | `undefined`                                                                         | 自定义 CSS 类名                                    |
+| `collapse.visibleLines`         | `number`                      | `3`                                                                                 | 折叠时显示的行数                                   |
+| `rendering`                     | `RenderingConfig`             | `{ lazy: false, rootMargin: '100px', placeholderHeight: 100 }`                      | 渲染性能配置                                       |
+| `rendering.lazy`                | `boolean`                     | `false`                                                                             | 是否启用延迟渲染（仅进入视口时渲染）               |
+| `rendering.rootMargin`          | `string`                      | `'100px'`                                                                           | IntersectionObserver 边距（如提前 100px 开始渲染） |
+| `rendering.placeholderHeight`   | `number`                      | `100`                                                                               | 占位符高度（px），内容未渲染前显示                 |
 | `HTMLAttributes`                | `Record<string, any>`         | `{ class: 'code-block-pro' }`                                                       | 额外的 HTML 属性                                   |
+
+---
+
+## 🔒 只读模式
+
+`CodeBlockPro` 跟随 Tiptap 编辑器级别的只读状态，不需要在扩展里额外配置 `readonly` 选项。
+
+```tsx
+const editor = useEditor({
+    editable: false,
+    extensions: [
+        StarterKit.configure({ codeBlock: false }),
+        CodeBlockPro.configure({ lowlight }),
+    ],
+});
+
+// 运行时切换
+editor?.setEditable(false);
+editor?.setEditable(true);
+```
+
+编辑器处于只读状态时：
+
+- 禁止会修改文档的行为：编辑代码内容、切换语言、删除代码块、会写入节点属性的命令都会 no-op / 返回 `false`。
+- 保留纯查看行为：复制、全屏、折叠/展开、行号显示切换、Mermaid 代码/图表预览切换仍可使用。
+- 只读下的查看切换只影响当前 UI 状态，不会写回文档 JSON。
 
 ---
 
@@ -202,9 +227,14 @@ CodeBlockPro.configure({ theme: 'auto' });
     --cbp-text: #24292e;
     --cbp-border: #d0d7de;
     --cbp-accent-color: #3b82f6;
+    --cbp-font-mono:
+        ui-monospace, 'SFMono-Regular', 'SF Mono', 'Cascadia Mono', 'Segoe UI Mono',
+        'Liberation Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
     /* 更多变量可以在 src/styles/*.css 中查看 */
 }
 ```
+
+默认情况下，CodeBlock Pro 会对外层容器和代码内容统一使用同一套系统等宽字体栈，这符合常见编辑器的最佳实践，也避免了核心包额外内置字体资源。如果你的业务需要更强的一致性，可以在宿主项目样式里覆盖 `--cbp-font-mono`。
 
 也可以根据主题添加不同前缀类（例如 `theme-dark`）做更精细的控制。
 
@@ -219,28 +249,28 @@ CodeBlockPro.configure({
     lowlight, // 语法高亮实例（必填）
     defaultLanguage: 'javascript',
     theme: 'auto',
-    macosControls: {
-        showClose: true,
-        showCollapse: true,
-        showFullscreen: true,
+    windowControls: {
+        close: true,
+        collapse: true,
+        fullscreen: true,
     },
     toolbar: {
-        showLanguageSelector: true,
-        showCopyButton: true,
-        showLineNumbersToggle: true,
+        language: true,
+        copy: true,
+        lineNumbers: true,
     },
     lineNumbers: {
         enabled: true,
-        startLine: 1,
-        toggleable: true,
+        start: 1,
+        allowToggle: true,
     },
     collapse: {
         enabled: true,
         defaultCollapsed: false,
-        collapsedLines: 3,
+        visibleLines: 3,
     },
-    lazyRender: {
-        enabled: false, // 代码块较多时启用可优化性能
+    rendering: {
+        lazy: false, // 代码块较多时启用可优化性能
         rootMargin: '100px',
         placeholderHeight: 100,
     },

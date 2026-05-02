@@ -5,8 +5,11 @@ import { ReactNodeViewRenderer } from '@tiptap/react';
 export type UploadFileCardAttrs = {
     url: string;
     name: string;
+    fileName?: string | null;
     mimeType: string;
     size: number;
+    storageMode?: string | null;
+    storageKey?: string | null;
 };
 
 export const UploadFileCard = Node.create({
@@ -22,8 +25,11 @@ export const UploadFileCard = Node.create({
         return {
             url: { default: null },
             name: { default: '' },
+            fileName: { default: null },
             mimeType: { default: '' },
             size: { default: 0 },
+            storageMode: { default: null },
+            storageKey: { default: null },
         };
     },
 
@@ -41,8 +47,11 @@ export const UploadFileCard = Node.create({
                     return {
                         url,
                         name,
+                        fileName: element.getAttribute('data-file-name'),
                         mimeType,
                         size: Number.isFinite(size) ? size : 0,
+                        storageMode: element.getAttribute('data-storage-mode'),
+                        storageKey: element.getAttribute('data-storage-key'),
                     };
                 },
             },
@@ -50,16 +59,20 @@ export const UploadFileCard = Node.create({
     },
 
     renderHTML({ HTMLAttributes }) {
-        const { url, name, mimeType, size, ...rest } = HTMLAttributes;
+        const { url, name, fileName, mimeType, size, storageMode, storageKey, ...rest } =
+            HTMLAttributes as UploadFileCardAttrs;
         return [
             'div',
             {
                 ...rest,
                 'data-upload-file-card': 'true',
                 'data-name': name,
+                ...(fileName ? { 'data-file-name': fileName } : {}),
                 'data-mime': mimeType,
                 'data-size': String(size ?? 0),
                 'data-url': url,
+                ...(storageMode ? { 'data-storage-mode': storageMode } : {}),
+                ...(storageKey ? { 'data-storage-key': storageKey } : {}),
             },
         ];
     },

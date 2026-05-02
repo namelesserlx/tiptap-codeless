@@ -14,6 +14,9 @@ export interface FileUploadMessages {
         alignCenter: string;
         alignRight: string;
     };
+    upload: {
+        uploading: string;
+    };
 }
 
 const fileUploadDictionaries: Record<SupportedLocale, FileUploadMessages> = {
@@ -27,6 +30,9 @@ const fileUploadDictionaries: Record<SupportedLocale, FileUploadMessages> = {
             alignCenter: '居中',
             alignRight: '右对齐',
         },
+        upload: {
+            uploading: '上传中',
+        },
     },
     'zh-TW': {
         fileCard: {
@@ -37,6 +43,9 @@ const fileUploadDictionaries: Record<SupportedLocale, FileUploadMessages> = {
             alignLeft: '靠左對齊',
             alignCenter: '置中',
             alignRight: '靠右對齊',
+        },
+        upload: {
+            uploading: '上傳中',
         },
     },
     en: {
@@ -49,6 +58,9 @@ const fileUploadDictionaries: Record<SupportedLocale, FileUploadMessages> = {
             alignCenter: 'Align center',
             alignRight: 'Align right',
         },
+        upload: {
+            uploading: 'Uploading',
+        },
     },
     ja: {
         fileCard: {
@@ -59,6 +71,9 @@ const fileUploadDictionaries: Record<SupportedLocale, FileUploadMessages> = {
             alignLeft: '左揃え',
             alignCenter: '中央揃え',
             alignRight: '右揃え',
+        },
+        upload: {
+            uploading: 'アップロード中',
         },
     },
 };

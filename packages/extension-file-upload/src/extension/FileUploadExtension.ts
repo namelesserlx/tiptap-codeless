@@ -1,88 +1,62 @@
-import { createFileUploadPlugin } from '@/extension/FileUploadPlugin';
+import { createFileUploadPlugin, fileUploadPluginKey } from '@/extension/FileUploadPlugin';
 import { UploadFileCard } from '@/extension/nodes/FileCardNode';
 import { UploadImage } from '@/extension/nodes/ImageNode';
 import { UploadVideo } from '@/extension/nodes/VideoNode';
+import {
+    defaultFileUploadOptions,
+    normalizeFileUploadOptions,
+} from '@/config/normalizeOptions';
 import { resolveFileUploadMessages } from '@/i18n';
+import { createManagedObjectUrlRegistry } from '@/runtime/assetRegistry';
+import { createDirectoryHandleStore } from '@/runtime/dialogLifecycle';
+import {
+    buildUploadContent,
+    enrichUploadedAssets,
+    filterIncomingFiles,
+    resolveInsertPosition,
+    resolveUploadHandler,
+    trackManagedAssets,
+} from '@/runtime/uploadPipeline';
+import {
+    createUploadPlaceholderId,
+    findUploadPlaceholderPosition,
+    normalizeUploadProgressPercent,
+    type UploadPlaceholder,
+    type UploadPlaceholderMeta,
+    type UploadPlaceholderPluginState,
+} from '@/runtime/uploadPlaceholders';
 import type {
     FileUploadOptions,
     InsertFilesParams,
-    StorageMode,
-    UploadHandler,
-    UploadResult,
+    UploadProgress,
 } from '@/types';
 import { getFileKind } from '@/utils/file';
-import { readImageSize, readVideoSize } from '@/utils/imageMeta';
-import { createUploadHandler } from '@/utils/uploadHandlers';
 import type { Editor, JSONContent } from '@tiptap/core';
 import { Extension } from '@tiptap/core';
-
-declare module '@tiptap/core' {
-    interface Commands<ReturnType> {
-        fileUpload: {
-            /** 打开文件选择器并插入 */
-            openFileDialog: (params?: { accept?: string; multiple?: boolean }) => ReturnType;
-            /** 直接插入文件（通常来自 drop/paste/dialog） */
-            insertFiles: (params: InsertFilesParams) => Promise<ReturnType> | ReturnType;
-        };
-    }
-
-    interface Storage {
-        fileUpload: {
-            imgBubbleMenuConfig?: {
-                enabled?: boolean;
-                zIndex?: number;
-            };
-            messages?: ReturnType<typeof resolveFileUploadMessages>;
-        };
-    }
-}
-
-const defaultOptions: FileUploadOptions = {
-    locale: 'zh-CN',
-    messages: {},
-    storageMode: 'memory',
-    localStorageOptions: undefined,
-    imgBubbleMenuConfig: {
-        enabled: true,
-        zIndex: 1000,
-    },
-    ui: {
-        bubbleMenu: {
-            enabled: true,
-            zIndex: 1000,
-        },
-    },
-    upload: undefined,
-    accept: undefined,
-    multiple: true,
-    handlePaste: true,
-    handleDrop: true,
-    maxFileSize: undefined,
-    onError: undefined,
-};
 
 export const FileUpload = Extension.create<FileUploadOptions>({
     name: 'fileUpload',
 
     addOptions() {
-        return defaultOptions;
+        return defaultFileUploadOptions;
     },
 
     addStorage() {
-        const bubbleMenuConfig = {
-            enabled:
-                this.options.ui?.bubbleMenu?.enabled ??
-                this.options.imgBubbleMenuConfig?.enabled ??
-                defaultOptions.ui?.bubbleMenu?.enabled,
-            zIndex:
-                this.options.ui?.bubbleMenu?.zIndex ??
-                this.options.imgBubbleMenuConfig?.zIndex ??
-                defaultOptions.ui?.bubbleMenu?.zIndex,
-        };
+        const normalizedOptions = normalizeFileUploadOptions(this.options);
 
         return {
-            imgBubbleMenuConfig: bubbleMenuConfig,
-            messages: resolveFileUploadMessages(this.options.locale, this.options.messages),
+            ui: {
+                bubbleMenu: normalizedOptions.ui.bubbleMenu,
+                uploadPlaceholder: normalizedOptions.ui.uploadPlaceholder,
+            },
+            messages: resolveFileUploadMessages(
+                normalizedOptions.locale,
+                normalizedOptions.messages
+            ),
+            managedObjectUrls: createManagedObjectUrlRegistry(),
+            directoryHandleStore: createDirectoryHandleStore(
+                normalizedOptions.storage.directoryHandle ?? null
+            ),
         };
     },
 
@@ -91,44 +65,70 @@ export const FileUpload = Extension.create<FileUploadOptions>({
     },
 
     addProseMirrorPlugins() {
+        const normalizedOptions = normalizeFileUploadOptions(this.options);
+
         return [
             createFileUploadPlugin({
-                editor: this.editor,
-                handleDrop: !!this.options.handleDrop,
-                handlePaste: !!this.options.handlePaste,
+                ingest: normalizedOptions.ingest,
+                onDrop: ({ files, position, event }) => {
+                    void this.editor.commands.insertFiles({ files, position, event });
+                },
+                onPaste: ({ files, position, event, htmlContent }) => {
+                    void this.editor.commands.insertFiles({
+                        files,
+                        position,
+                        event,
+                        htmlContent,
+                    });
+                },
+                managedObjectUrls: this.storage.managedObjectUrls,
             }),
         ];
     },
 
     addCommands() {
-        // 获取上传处理器
-        const getUploadHandler = (): UploadHandler => {
-            return createUploadHandler(
-                (this.options.storageMode ?? defaultOptions.storageMode) as StorageMode,
-                {
-                    localStorageOptions: this.options.localStorageOptions,
-                    customUpload: this.options.upload,
-                }
-            );
-        };
+        const normalizedOptions = normalizeFileUploadOptions(this.options);
 
         return {
             openFileDialog:
                 (params?: { accept?: string; multiple?: boolean }) =>
                 ({ editor }) => {
+                    if (!editor.isEditable) {
+                        return false;
+                    }
+
                     const input = document.createElement('input');
+                    let settled = false;
                     input.type = 'file';
-                    input.accept =
-                        params?.accept ?? this.options.accept ?? defaultOptions.accept ?? '';
-                    input.multiple = (params?.multiple ??
-                        this.options.multiple ??
-                        defaultOptions.multiple) as boolean;
+                    input.accept = params?.accept ?? normalizedOptions.picker.accept ?? '';
+                    input.multiple = params?.multiple ?? normalizedOptions.picker.multiple;
                     input.style.position = 'fixed';
                     input.style.left = '-9999px';
 
                     const cleanup = () => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(safetyTimer);
                         input.onchange = null;
+                        input.oncancel = null;
+                        window.removeEventListener('focus', handleWindowFocus, true);
                         input.remove();
+                    };
+
+                    const safetyTimer = window.setTimeout(() => {
+                        cleanup();
+                    }, 300_000);
+
+                    const handleWindowFocus = () => {
+                        window.setTimeout(() => {
+                            if (!settled && (input.files?.length ?? 0) === 0) {
+                                cleanup();
+                            }
+                        }, 0);
+                    };
+
+                    input.oncancel = () => {
+                        cleanup();
                     };
 
                     input.onchange = async () => {
@@ -138,13 +138,14 @@ export const FileUpload = Extension.create<FileUploadOptions>({
                                 await editor.commands.insertFiles({ files });
                             }
                         } catch (err) {
-                            this.options.onError?.(err);
+                            normalizedOptions.onError?.(err);
                         } finally {
                             cleanup();
                         }
                     };
 
                     document.body.appendChild(input);
+                    window.addEventListener('focus', handleWindowFocus, true);
                     input.click();
                     return true;
                 },
@@ -152,87 +153,95 @@ export const FileUpload = Extension.create<FileUploadOptions>({
             insertFiles:
                 (params: InsertFilesParams) =>
                 ({ editor }) => {
+                    if (!editor.isEditable) {
+                        return false;
+                    }
+
                     void (async () => {
+                        let placeholderIds: string[] = [];
+                        let placeholderEnabled = false;
+
                         try {
-                            const files = (params.files || []).filter((file) => {
-                                if (!this.options.maxFileSize) return true;
-                                return file.size <= this.options.maxFileSize;
-                            });
+                            const files = filterIncomingFiles(
+                                params.files || [],
+                                normalizedOptions.ingest.maxFileSize
+                            );
 
                             if (files.length === 0) return;
+
+                            const initialInsertPosition = resolveInsertPosition(
+                                params,
+                                editor.state.selection.from
+                            );
+                            const uploadTargets = createUploadTargets(
+                                files,
+                                initialInsertPosition,
+                                this.storage.messages?.upload?.uploading ?? 'Uploading'
+                            );
+                            placeholderIds = uploadTargets.map(({ placeholder }) => placeholder.id);
+                            placeholderEnabled =
+                                normalizedOptions.ui.uploadPlaceholder.enabled !== false;
+
+                            if (placeholderEnabled) {
+                                dispatchUploadPlaceholderMeta(editor, {
+                                    type: 'add',
+                                    placeholders: uploadTargets.map(
+                                        ({ placeholder }) => placeholder
+                                    ),
+                                });
+                            }
+
+                            const reportProgress = (progress: UploadProgress) => {
+                                if (!placeholderEnabled) return;
+
+                                const percent = normalizeUploadProgressPercent(progress);
+                                if (percent === undefined) return;
+
+                                const ids = resolveProgressTargetIds(progress, uploadTargets);
+                                if (ids.length === 0) return;
+
+                                dispatchUploadPlaceholderMeta(editor, {
+                                    type: 'update',
+                                    ids,
+                                    percent,
+                                });
+                            };
 
                             const ctx = {
                                 editor,
                                 event: params.event,
                                 position: params.position,
+                                onProgress: reportProgress,
                             };
 
-                            const uploadHandler = getUploadHandler();
-                            const result: UploadResult = await uploadHandler(files, ctx);
+                            const uploadHandler = resolveUploadHandler({
+                                storage: normalizedOptions.storage,
+                                directoryHandleStore: this.storage.directoryHandleStore,
+                            });
+                            const result = await uploadHandler(files, ctx);
+                            const assets = await enrichUploadedAssets(result.assets);
+                            trackManagedAssets(assets, this.storage.managedObjectUrls);
 
-                            const assets = await Promise.all(
-                                result.assets.map(async (asset) => {
-                                    if (asset.kind === 'image' && (!asset.width || !asset.height)) {
-                                        const meta = await readImageSize(asset.url);
-                                        if (meta) return { ...asset, ...meta };
-                                    }
-                                    if (asset.kind === 'video' && (!asset.width || !asset.height)) {
-                                        const meta = await readVideoSize(asset.url);
-                                        if (meta) return { ...asset, ...meta };
-                                    }
-                                    return asset;
-                                })
-                            );
+                            if (editor.isDestroyed) {
+                                return;
+                            }
 
-                            const assetToContent = (
-                                asset: (typeof assets)[number]
-                            ): JSONContent[] => {
-                                if (asset.kind === 'image') {
-                                    return [
-                                        {
-                                            type: 'uploadImage',
-                                            attrs: {
-                                                src: asset.url,
-                                                alt: asset.name,
-                                                title: asset.name,
-                                                width: asset.width ?? null,
-                                                height: asset.height ?? null,
-                                            },
-                                        },
-                                        { type: 'paragraph' },
-                                    ] as JSONContent[];
-                                }
-                                if (asset.kind === 'video') {
-                                    return [
-                                        {
-                                            type: 'uploadVideo',
-                                            attrs: {
-                                                src: asset.url,
-                                                title: asset.name,
-                                                width: asset.width ?? null,
-                                                height: asset.height ?? null,
-                                            },
-                                        },
-                                        { type: 'paragraph' },
-                                    ] as JSONContent[];
-                                }
-                                return [
-                                    {
-                                        type: 'uploadFileCard',
-                                        attrs: {
-                                            url: asset.url,
-                                            name: asset.name,
-                                            mimeType: asset.mimeType,
-                                            size: asset.size,
-                                        },
-                                    },
-                                    { type: 'paragraph' },
-                                ] as JSONContent[];
-                            };
+                            const content: JSONContent[] = buildUploadContent(assets);
+                            const pos =
+                                getPlaceholderInsertPosition(editor, placeholderIds) ??
+                                initialInsertPosition;
 
-                            const content: JSONContent[] = assets.flatMap(assetToContent);
+                            if (placeholderEnabled) {
+                                dispatchUploadPlaceholderMeta(editor, {
+                                    type: 'remove',
+                                    ids: placeholderIds,
+                                });
+                            }
 
-                            const pos = params.position ?? editor.state.selection.from;
+                            if (content.length === 0) {
+                                return;
+                            }
+
                             editor
                                 .chain()
                                 .focus()
@@ -241,7 +250,13 @@ export const FileUpload = Extension.create<FileUploadOptions>({
                                 })
                                 .run();
                         } catch (err) {
-                            this.options.onError?.(err);
+                            if (placeholderEnabled && placeholderIds.length > 0) {
+                                dispatchUploadPlaceholderMeta(editor, {
+                                    type: 'remove',
+                                    ids: placeholderIds,
+                                });
+                            }
+                            normalizedOptions.onError?.(err);
                         }
                     })();
 
@@ -259,4 +274,64 @@ export function inferKinds(files: File[]) {
 
 export function createEditorUploadContext(editor: Editor) {
     return { editor };
+}
+
+function createUploadTargets(
+    files: File[],
+    pos: number,
+    statusLabel: string
+): Array<{ file: File; placeholder: UploadPlaceholder }> {
+    return files.map((file) => ({
+        file,
+        placeholder: {
+            id: createUploadPlaceholderId(),
+            pos,
+            kind: getFileKind(file),
+            name: file.name || 'untitled',
+            mimeType: file.type || 'application/octet-stream',
+            size: file.size,
+            statusLabel,
+        },
+    }));
+}
+
+function resolveProgressTargetIds(
+    progress: UploadProgress,
+    uploadTargets: Array<{ file: File; placeholder: UploadPlaceholder }>
+): string[] {
+    if (progress.id) {
+        return uploadTargets.some(({ placeholder }) => placeholder.id === progress.id)
+            ? [progress.id]
+            : [];
+    }
+
+    if (progress.file) {
+        return uploadTargets
+            .filter(({ file }) => file === progress.file)
+            .map(({ placeholder }) => placeholder.id);
+    }
+
+    if (progress.fileName) {
+        return uploadTargets
+            .filter(({ file }) => file.name === progress.fileName)
+            .map(({ placeholder }) => placeholder.id);
+    }
+
+    return uploadTargets.map(({ placeholder }) => placeholder.id);
+}
+
+function dispatchUploadPlaceholderMeta(editor: Editor, meta: UploadPlaceholderMeta): void {
+    if (editor.isDestroyed) {
+        return;
+    }
+
+    editor.view.dispatch(editor.state.tr.setMeta(fileUploadPluginKey, meta));
+}
+
+function getPlaceholderInsertPosition(editor: Editor, ids: string[]): number | undefined {
+    const state = fileUploadPluginKey.getState(editor.state) as
+        | UploadPlaceholderPluginState
+        | undefined;
+
+    return findUploadPlaceholderPosition(state, ids);
 }

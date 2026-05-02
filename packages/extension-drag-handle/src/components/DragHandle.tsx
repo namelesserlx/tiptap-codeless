@@ -26,7 +26,7 @@ export type DragHandleProps = Record<string, never>;
  * 遵循高内聚原则，具体的事件处理下沉到子组件
  */
 export const DragHandle: React.FC<DragHandleProps> = memo(() => {
-    const { editor, pluginState } = useDragHandleContext();
+    const { editor, options, pluginState, hostElement } = useDragHandleContext();
     const { currentNode: nodeInfo, isVisible: visible } = pluginState;
 
     // 不满足显示条件时不渲染
@@ -35,13 +35,16 @@ export const DragHandle: React.FC<DragHandleProps> = memo(() => {
     }
 
     // 根据节点是否为空决定模式
-    const isInsertMode = nodeInfo.isEmpty;
+    const isInsertMode = nodeInfo.isEmpty && options.insertMenu?.enabled !== false;
+    if (!hostElement) {
+        return null;
+    }
 
     return createPortal(
         <div className="tiptap-drag-handle-container" style={CONTAINER_STYLE}>
             {isInsertMode ? <InsertHandle /> : <GripHandle />}
         </div>,
-        document.body
+        hostElement
     );
 });
 

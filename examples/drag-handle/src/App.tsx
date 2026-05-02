@@ -32,6 +32,7 @@ const initialContent = `
 
 function App() {
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
+    const [editable, setEditable] = useState(true);
 
     const insertMenuItems: (InsertMenuItem | InsertMenuGroup)[] = [
         {
@@ -61,6 +62,7 @@ function App() {
     ];
 
     const editor = useEditor({
+        editable,
         extensions: [
             StarterKit.configure({
                 // 禁用默认的 dropcursor，使用自定义配置
@@ -78,20 +80,15 @@ function App() {
             }),
             DragHandle.configure({
                 locale: 'zh-CN',
-                insertMenu: {
-                    enabled: true,
-                    triggerOnInput: true,
-                    trigger: '/',
-                    position: {
-                        placement: 'right',
-                    },
-                    itemsMode: 'merge',
-                    items: insertMenuItems,
+                handle: {
+                    zIndex: 120,
                 },
-                ui: {
-                    menu: {
-                        zIndex: 2400,
-                    },
+                insertMenu: {
+                    trigger: '/',
+                    placement: 'right',
+                    strategy: 'merge',
+                    zIndex: 2400,
+                    items: insertMenuItems,
                 },
             }),
             CodeBlockPro.configure({
@@ -99,34 +96,34 @@ function App() {
                 locale: 'zh-CN',
                 defaultLanguage: 'javascript',
                 theme: theme,
-                // macosControls: {
-                //     showClose: true,
-                //     showCollapse: true,
-                //     showFullscreen: true,
+                // windowControls: {
+                //     close: true,
+                //     collapse: true,
+                //     fullscreen: true,
                 // },
                 toolbar: {
-                    showLanguageSelector: true,
-                    showCopyButton: true,
-                    showLineNumbersToggle: true,
+                    language: true,
+                    copy: true,
+                    lineNumbers: true,
                 },
                 lineNumbers: {
                     enabled: true,
-                    startLine: 1,
-                    toggleable: true,
+                    start: 1,
+                    allowToggle: true,
                 },
                 collapse: {
                     enabled: true,
                     defaultCollapsed: false,
-                    collapsedLines: 5,
+                    visibleLines: 5,
                 },
-                lazyRender: {
-                    enabled: true, // 启用延迟渲染
+                rendering: {
+                    lazy: true, // 启用延迟渲染
                     rootMargin: '100px', // 提前 100px 开始渲染
                     placeholderHeight: 120, // 占位符高度
                 },
                 ui: {
-                    languageDropdown: {
-                        zIndex: 2400,
+                    layers: {
+                        languageDropdown: 2400,
                     },
                 },
             }),
@@ -136,6 +133,11 @@ function App() {
         ],
         content: initialContent,
     });
+
+    useEffect(() => {
+        if (!editor) return;
+        editor.setEditable(editable);
+    }, [editor, editable]);
 
     // 同步主题到 html 元素，确保 fixed 定位的元素也能正确继承主题变量
     useEffect(() => {
@@ -152,6 +154,12 @@ function App() {
             <header className="header">
                 <h1>Drag Handle 示例</h1>
                 <div className="header-actions">
+                    <button
+                        className="theme-toggle"
+                        onClick={() => setEditable((v) => !v)}
+                    >
+                        {editable ? '✅ 可编辑' : '🚫 禁用'}
+                    </button>
                     <button className="theme-toggle" onClick={toggleTheme}>
                         {theme === 'light' ? '🌙 暗色模式' : '☀️ 亮色模式'}
                     </button>

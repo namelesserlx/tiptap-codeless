@@ -80,4 +80,61 @@ describe('InsertMenuProvider', () => {
         expect(screen.getByText('Paragraph')).toBeInTheDocument();
         expect(screen.getByText('Code block')).toBeInTheDocument();
     });
+
+    it('merges custom items through insertMenu.strategy', () => {
+        const editor = {
+            on: vi.fn(),
+            off: vi.fn(),
+            view: {
+                dispatch: vi.fn(),
+                state: {
+                    tr: {
+                        setMeta: vi.fn(() => ({})),
+                    },
+                },
+            },
+        } as never;
+
+        render(
+            <DragHandleProvider
+                editor={editor}
+                options={
+                    {
+                        locale: 'en',
+                        insertMenu: {
+                            strategy: 'merge',
+                            items: [
+                                {
+                                    id: 'common',
+                                    title: 'Common',
+                                    items: [
+                                        {
+                                            id: 'customBlock',
+                                            label: 'Custom block',
+                                            command: vi.fn(),
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                    } as never
+                }
+                pluginState={{
+                    locked: false,
+                    currentNode: null,
+                    isDragging: false,
+                    isVisible: false,
+                    insertMenuCommandRange: null,
+                }}
+            >
+                <InsertMenuProvider>
+                    <MenuSnapshot />
+                </InsertMenuProvider>
+            </DragHandleProvider>
+        );
+
+        expect(screen.getByText('Common')).toBeInTheDocument();
+        expect(screen.getByText('Paragraph')).toBeInTheDocument();
+        expect(screen.getByText('Custom block')).toBeInTheDocument();
+    });
 });

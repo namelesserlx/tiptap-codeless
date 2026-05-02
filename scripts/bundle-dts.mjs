@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'fs/promises';
+import { mkdir, readFile, writeFile } from 'fs/promises';
 import process from 'node:process';
 import { dirname, resolve } from 'path';
 import { generateDtsBundle } from 'dts-bundle-generator';
@@ -11,6 +11,7 @@ import { generateDtsBundle } from 'dts-bundle-generator';
  *   entry: string;
  *   output: string;
  *   externalImports?: string[];
+ *   appendDeclarations?: string[];
  * }} options
  */
 export async function bundleDeclarations(options) {
@@ -44,14 +45,47 @@ export async function bundleDeclarations(options) {
         );
     }
 
+    const appendedDeclarations = await Promise.all(
+        (options.appendDeclarations ?? []).map(async (file) =>
+            sanitizeAppendedDeclaration(await readFile(resolve(file), 'utf8'))
+        )
+    );
+
+    const finalOutput = [bundles[0].trim(), ...appendedDeclarations.map((content) => content.trim())]
+        .filter(Boolean)
+        .join('\n\n');
+
     await mkdir(dirname(output), { recursive: true });
-    await writeFile(output, `${bundles[0].trim()}\n`, 'utf8');
+    await writeFile(output, `${finalOutput}\n`, 'utf8');
+}
+
+function sanitizeAppendedDeclaration(content) {
+    return content
+        .split('\n')
+        .filter((line) => {
+            if (/^\s*import\b.*from\s+['"]\./.test(line)) {
+                return false;
+            }
+
+            if (/^\s*import\s+['"]\./.test(line)) {
+                return false;
+            }
+
+            if (/^\s*export\s*\{\s*\};?\s*$/.test(line)) {
+                return false;
+            }
+
+            return true;
+        })
+        .join('\n')
+        .trim();
 }
 
 function readCliArgs(argv) {
-    /** @type {{ project?: string; entry?: string; output?: string; externalImports: string[] }} */
+    /** @type {{ project?: string; entry?: string; output?: string; externalImports: string[]; appendDeclarations: string[] }} */
     const parsed = {};
     parsed.externalImports = [];
+    parsed.appendDeclarations = [];
 
     for (let index = 0; index < argv.length; index += 1) {
         const arg = argv[index];
@@ -84,6 +118,16 @@ function readCliArgs(argv) {
             );
             index += 1;
         }
+
+        if (arg === '--append-declaration' && next) {
+            parsed.appendDeclarations.push(
+                ...next
+                    .split(',')
+                    .map((value) => value.trim())
+                    .filter(Boolean)
+            );
+            index += 1;
+        }
     }
 
     return parsed;
@@ -103,6 +147,7 @@ async function main() {
         entry: parsed.entry,
         output: parsed.output,
         externalImports: parsed.externalImports,
+        appendDeclarations: parsed.appendDeclarations,
     });
 }
 

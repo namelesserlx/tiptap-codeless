@@ -35,7 +35,8 @@
     },
     "files": [
         "dist",
-        "README.md"
+        "README.md",
+        "README.zh-CN.md"
     ],
     "scripts": {
         "dev": "vite build --watch",
@@ -47,10 +48,11 @@
     },
     "dependencies": {
         "@tiptap-codeless/core": "workspace:*",
-        "@tiptap/core": "^3.13.0",
-        "@tiptap/extension-code-block-lowlight": "^3.13.0",
-        "@tiptap/pm": "^3.13.0",
-        "@tiptap/react": "^3.13.0",
+        "@tiptap/core": "^3.22.4",
+        "@tiptap/extension-code-block": "^3.22.4",
+        "@tiptap/extension-code-block-lowlight": "^3.22.4",
+        "@tiptap/pm": "^3.22.4",
+        "@tiptap/react": "^3.22.4",
         "classnames": "^2.5.1",
         "lowlight": "^3.3.0"
     },

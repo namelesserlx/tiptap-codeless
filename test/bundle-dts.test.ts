@@ -26,12 +26,15 @@ describe('bundleDeclarations', () => {
                 project: resolve(fixtureRoot, 'tsconfig.json'),
                 entry: resolve(fixtureRoot, 'src/index.ts'),
                 output: outputFile,
+                appendDeclarations: [resolve(fixtureRoot, 'src/ambient.d.ts')],
             });
 
             const bundled = await readFile(outputFile, 'utf8');
 
             expect(bundled).toContain('interface ExampleOptions');
             expect(bundled).toContain('declare function createExample');
+            expect(bundled).toContain("declare module 'example-editor'");
+            expect(bundled).toContain('exampleCommand: (options?: ExampleOptions) => ReturnType;');
             expect(bundled).not.toContain("from '@/");
             expect(bundled).not.toContain("from './createExample'");
             expect(bundled).not.toContain("from './types'");

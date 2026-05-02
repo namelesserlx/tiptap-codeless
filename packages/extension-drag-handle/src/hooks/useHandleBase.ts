@@ -4,7 +4,7 @@ import { useDragHandleContext } from '../contexts/DragHandleContext';
 import { calculateHandlePosition } from '../utils/position';
 
 /** 默认样式配置 */
-const DEFAULT_HANDLE_STYLE = {
+const DEFAULT_HANDLE = {
     width: 24,
     height: 24,
     zIndex: 100,
@@ -21,15 +21,12 @@ const DEFAULT_HANDLE_STYLE = {
  */
 export function useHandleBase() {
     const { editor, options, pluginState } = useDragHandleContext();
-    const { currentNode: nodeInfo, isVisible: visible, locked } = pluginState;
+    const { currentNode: nodeInfo, isVisible: visible, locked, isDragging } = pluginState;
 
     const [isHovering, setIsHovering] = useState(false);
 
     // 合并样式配置
-    const handleStyle = useMemo(
-        () => ({ ...DEFAULT_HANDLE_STYLE, ...options.handleStyle, ...options.ui?.handle }),
-        [options.handleStyle, options.ui?.handle]
-    );
+    const handle = useMemo(() => options.handle ?? DEFAULT_HANDLE, [options.handle]);
 
     // 计算位置
     const position = useMemo(
@@ -56,10 +53,11 @@ export function useHandleBase() {
         options,
         nodeInfo,
         locked,
+        isDragging,
         position,
-        handleStyle,
+        handle,
         isHovering,
-        shouldShow,
+        shouldShow: Boolean(shouldShow),
         handleMouseEnter,
         handleMouseLeave,
     };

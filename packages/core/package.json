@@ -42,8 +42,8 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@tiptap/core": "^3.13.0",
-        "@tiptap/pm": "^3.13.0"
+        "@tiptap/core": "^3.22.4",
+        "@tiptap/pm": "^3.22.4"
     },
     "devDependencies": {
         "@types/react": "^19.2.7",

@@ -2,7 +2,7 @@
  * 行号状态管理 Hook
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { LineNumbersConfig } from '@/types';
 
 export interface UseLineNumbersOptions {
@@ -27,20 +27,35 @@ export interface UseLineNumbersOptions {
  */
 export function useLineNumbers(options: UseLineNumbersOptions) {
     const { showLineNumbersAttr, lineNumbersConfig, onToggle } = options;
-
-    // 使用函数式初始化，只在首次渲染时设置值
-    const [showLineNumbers, setShowLineNumbers] = useState(
-        () => showLineNumbersAttr ?? lineNumbersConfig?.enabled ?? true
+    const resolvedShowLineNumbers = useMemo(
+        () => showLineNumbersAttr ?? lineNumbersConfig?.enabled ?? true,
+        [showLineNumbersAttr, lineNumbersConfig?.enabled]
     );
+
+    const [lineNumbersState, setLineNumbersState] = useState(() => ({
+        source: resolvedShowLineNumbers,
+        value: resolvedShowLineNumbers,
+    }));
+    const showLineNumbers =
+        lineNumbersState.source === resolvedShowLineNumbers
+            ? lineNumbersState.value
+            : resolvedShowLineNumbers;
 
     // 切换行号显示
     const toggleLineNumbers = useCallback(() => {
-        setShowLineNumbers((prev) => {
-            const newValue = !prev;
+        setLineNumbersState((current) => {
+            const currentValue =
+                current.source === resolvedShowLineNumbers
+                    ? current.value
+                    : resolvedShowLineNumbers;
+            const newValue = !currentValue;
             onToggle?.(newValue);
-            return newValue;
+            return {
+                source: resolvedShowLineNumbers,
+                value: newValue,
+            };
         });
-    }, [onToggle]);
+    }, [onToggle, resolvedShowLineNumbers]);
 
     return {
         showLineNumbers,

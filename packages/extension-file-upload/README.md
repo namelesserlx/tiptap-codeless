@@ -3,7 +3,7 @@
 File upload extension for Tiptap: drag & drop, paste, preview, resize, and pluggable storage.
 
 - [English](README.md) (Current)
-- [中文](https://github.com/namelesserlx/tiptap-codeless/blob/main/packages/extension-file-upload/docs.zh-CN.md)
+- [中文](https://github.com/namelesserlx/tiptap-codeless/blob/main/packages/extension-file-upload/README.zh-CN.md)
 - [繁體中文](../../README.zh-TW.md)
 - [日本語](../../README.ja.md)
 
@@ -18,6 +18,7 @@ File upload extension for Tiptap: drag & drop, paste, preview, resize, and plugg
 - 🎬 **Video Preview** – Video files can be previewed directly in the editor
 - 📁 **File Cards** – Non-image/video files displayed as cards with file information
 - 💾 **Multiple Storage Modes** – Support memory, Base64, local file system, custom upload
+- ⏳ **Upload Placeholder** – Shows a temporary upload placeholder and optional progress before the final asset is inserted
 - ⚙️ **File Type & Size Control** – Configurable file types and size limits
 
 ---
@@ -46,7 +47,9 @@ const editor = useEditor({
         StarterKit,
         FileUpload.configure({
             locale: 'en',
-            storageMode: 'memory', // Default
+            storage: {
+                mode: 'memory', // Default
+            },
         }),
     ],
 });
@@ -66,7 +69,9 @@ Uses Object URL, files are stored in memory only and will be lost after page ref
 
 ```tsx
 FileUpload.configure({
-    storageMode: 'memory',
+    storage: {
+        mode: 'memory',
+    },
 });
 ```
 
@@ -76,7 +81,9 @@ Converts files to Base64 Data URL, can be persisted in documents (but increases 
 
 ```tsx
 FileUpload.configure({
-    storageMode: 'base64',
+    storage: {
+        mode: 'base64',
+    },
 });
 ```
 
@@ -86,8 +93,8 @@ Uses File System Access API to save files to a user-selected local directory.
 
 ```tsx
 FileUpload.configure({
-    storageMode: 'local',
-    localStorageOptions: {
+    storage: {
+        mode: 'local',
         // Optional: Provide an existing directory handle to avoid repeated popups
         directoryHandle: undefined,
         // Optional: Custom file name generator
@@ -101,31 +108,59 @@ FileUpload.configure({
 ### 4. Custom Mode
 
 Uses a custom upload handler, suitable for uploading to OSS, cloud storage, etc.
+The extension owns the editor-side placeholder; your business code only needs
+to upload files and return final asset metadata.
 
 ```tsx
 FileUpload.configure({
-    storageMode: 'custom',
-    upload: async (files, ctx) => {
-        // Upload to your server or cloud storage
-        const results = await Promise.all(
-            files.map(async (file) => {
-                const formData = new FormData();
-                formData.append('file', file);
-                const response = await fetch('/api/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
-                const { url } = await response.json();
-                return {
-                    kind: getFileKind(file), // 'image' | 'video' | 'file'
-                    url,
-                    name: file.name,
-                    mimeType: file.type,
-                    size: file.size,
-                };
-            })
-        );
-        return { assets: results };
+    storage: {
+        mode: 'custom',
+        upload: async (files, ctx) => {
+            // Upload to your server or cloud storage
+            const results = await Promise.all(
+                files.map(async (file) => {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    const { url } = await response.json();
+                    return {
+                        kind: getFileKind(file), // 'image' | 'video' | 'file'
+                        url,
+                        name: file.name,
+                        mimeType: file.type,
+                        size: file.size,
+                    };
+                })
+            );
+            return { assets: results };
+        },
+    },
+});
+```
+
+If your upload SDK can report progress, call `ctx.onProgress`. When progress is
+not available, the placeholder stays in an indeterminate loading state.
+
+```tsx
+FileUpload.configure({
+    storage: {
+        mode: 'custom',
+        upload: async (files, ctx) => {
+            const assets = await Promise.all(
+                files.map((file) =>
+                    uploadToCos(file, {
+                        onProgress: ({ loaded, total }) => {
+                            ctx.onProgress?.({ file, loaded, total });
+                        },
+                    })
+                )
+            );
+
+            return { assets };
+        },
     },
 });
 ```
@@ -148,6 +183,9 @@ FileUpload.configure({
         bubbleMenu: {
             zIndex: 2400,
         },
+        uploadPlaceholder: {
+            enabled: true,
+        },
     },
 });
 ```
@@ -156,17 +194,59 @@ FileUpload.configure({
 | --------------------- | --------------------------------------------- | --------------------------------- | ------------------------------------------------ |
 | `locale`              | `'zh-CN' \| 'zh-TW' \| 'en' \| 'ja'`          | `'zh-CN'`                         | Built-in UI locale                               |
 | `messages`            | `DeepPartial<FileUploadMessages>`             | `{}`                              | Override built-in labels                         |
-| `storageMode`         | `'memory' \| 'base64' \| 'local' \| 'custom'` | `'memory'`                        | Storage mode                                     |
-| `localStorageOptions` | `LocalStorageOptions`                         | `undefined`                       | Local storage options (local mode only)          |
-| `imgBubbleMenuConfig` | `{ enabled?: boolean; zIndex?: number }`      | `{ enabled: true, zIndex: 1000 }` | Legacy bubble menu config; prefer `ui.bubbleMenu` |
-| `ui.bubbleMenu`       | `{ enabled?: boolean; zIndex?: number }`      | `{ enabled: true, zIndex: 1000 }` | Canonical bubble menu config                     |
-| `upload`              | `UploadHandler`                               | `undefined`                       | Custom upload handler (required for custom mode) |
-| `accept`              | `string`                                      | `undefined`                       | Accepted file types for file picker              |
-| `multiple`            | `boolean`                                     | `true`                            | Allow multiple selection                         |
-| `handlePaste`         | `boolean`                                     | `true`                            | Handle paste events                              |
-| `handleDrop`          | `boolean`                                     | `true`                            | Handle drop events                               |
-| `maxFileSize`         | `number`                                      | `undefined`                       | Maximum file size per file (bytes)               |
+| `storage.mode`        | `'memory' \| 'base64' \| 'local' \| 'custom'` | `'memory'`                        | Storage mode                                     |
+| `storage.upload`      | `UploadHandler`                               | `undefined`                       | Custom upload handler (required for custom mode) |
+| `storage.directoryHandle` | `FileSystemDirectoryHandle`                | `undefined`                       | Reuse an existing directory handle in local mode |
+| `storage.fileName`    | `(file: File) => string`                      | `undefined`                       | Custom file naming strategy                      |
+| `storage.alwaysAskDirectory` | `boolean`                              | `false`                           | Force directory picker each time in local mode   |
+| `picker.accept`       | `string`                                      | `undefined`                       | Accepted file types for file picker              |
+| `picker.multiple`     | `boolean`                                     | `true`                            | Allow multiple selection                         |
+| `ingest.paste`        | `boolean`                                     | `true`                            | Handle paste events                              |
+| `ingest.drop`         | `boolean`                                     | `true`                            | Handle drop events                               |
+| `ingest.allowedMimeTypes` | `string[]`                                | `undefined`                       | Allow only specific MIME types for paste/drop    |
+| `ingest.maxFileSize`  | `number`                                      | `undefined`                       | Maximum file size per file (bytes)               |
+| `ui.bubbleMenu`       | `{ enabled?: boolean; zIndex?: number }`      | `{ enabled: true, zIndex: 1000 }` | Bubble menu configuration                        |
+| `ui.uploadPlaceholder` | `{ enabled?: boolean }`                      | `{ enabled: true }`               | Temporary upload placeholder configuration       |
 | `onError`             | `(error: unknown) => void`                    | `undefined`                       | Error callback                                   |
+
+---
+
+## ⏳ Upload Placeholder and Progress
+
+`FileUpload` inserts upload feedback as ProseMirror decorations, not document
+nodes. This means upload placeholders are visible immediately after drag, paste,
+or `insertFiles`, but they are never persisted into editor JSON.
+
+- Upload starts: a placeholder appears at the insertion position.
+- Upload succeeds: the placeholder is removed and replaced with the final image, video, or file-card node.
+- Upload fails: the placeholder is removed and `onError` receives the error.
+- Progress is optional: report `{ percent }` or `{ loaded, total }` through `ctx.onProgress`.
+
+The upload transport itself remains application-owned. COS/OSS/S3 signatures,
+tokens, bucket names, and final URLs should stay in your app or server code.
+
+---
+
+## 🔒 Read-only Mode
+
+`FileUpload` follows Tiptap's editor-level read-only state. You don't need a separate `readonly` option in this extension.
+
+```tsx
+const editor = useEditor({
+    editable: false,
+    extensions: [StarterKit, FileUpload],
+});
+
+// Toggle later
+editor?.setEditable(false);
+editor?.setEditable(true);
+```
+
+When the editor is read-only:
+
+- Upload entry points are disabled: `openFileDialog`, `insertFiles`, paste upload, and drag/drop upload return no-op / `false`.
+- Image mutation UI is hidden: resize handles and alignment bubble menu are not shown.
+- Uploaded image/video/file-card nodes are rendered for viewing and download/playback, but drag/move mutation is disabled.
 
 ---
 

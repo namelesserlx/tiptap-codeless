@@ -3,12 +3,12 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { CodeIcon, DividerIcon, ListIcon, ParagraphIcon, QuoteIcon } from '../components/Icons';
 import { lockDragHandle } from '../extension/DragHandlePlugin';
 import { resolveDragHandleMessages } from '../i18n';
-import type { InsertMenuGroup, InsertMenuItem } from '../types';
+import type { InsertMenuGroup, InsertMenuItem, InsertMenuProps, MenuPlacement } from '../types';
 import { useDragHandleContext } from './DragHandleContext';
 
 /** 菜单位置配置类型 */
 export interface InsertMenuPositionConfig {
-    placement?: 'right' | 'left' | 'bottom' | 'top';
+    placement?: MenuPlacement;
     offset?: { x?: number; y?: number };
 }
 
@@ -187,6 +187,8 @@ export interface InsertMenuContextValue {
     positionConfig: InsertMenuPositionConfig | undefined;
     /** 菜单层级 */
     zIndex: number;
+    /** 自定义菜单组件 */
+    component?: React.ComponentType<InsertMenuProps>;
     /** 空状态文案 */
     emptyLabel: string;
     /** 是否启用 */
@@ -215,34 +217,39 @@ export const InsertMenuProvider: React.FC<InsertMenuProviderProps> = ({ children
         () => resolveDragHandleMessages(options.locale, options.messages),
         [options.locale, options.messages]
     );
-
-    // 是否启用插入菜单
     const enabled = options.insertMenu?.enabled !== false;
-
     // 计算菜单项
     const items = useMemo(() => {
         const userItems = options.insertMenu?.items;
-        const itemsMode = options.insertMenu?.itemsMode ?? 'replace';
+        const strategy = options.insertMenu?.strategy ?? 'replace';
         const builtInItems = createDefaultInsertMenuItems(options.locale, options.messages);
 
         if (!userItems?.length) {
             return builtInItems;
         }
 
-        return itemsMode === 'merge'
-            ? mergeInsertMenuItems(builtInItems, userItems)
-            : userItems;
-    }, [options.insertMenu?.items, options.insertMenu?.itemsMode, options.locale, options.messages]);
+        return strategy === 'merge' ? mergeInsertMenuItems(builtInItems, userItems) : userItems;
+    }, [options.insertMenu?.items, options.insertMenu?.strategy, options.locale, options.messages]);
 
     // 菜单位置配置
-    const positionConfig = options.insertMenu?.position;
-    const zIndex = options.ui?.menu?.zIndex ?? 1000;
+    const positionConfig = useMemo(
+        () => ({
+            placement: options.insertMenu?.placement,
+            offset: options.insertMenu?.offset,
+        }),
+        [options.insertMenu?.placement, options.insertMenu?.offset]
+    );
+    const zIndex = options.insertMenu?.zIndex ?? 1000;
+    const component = options.insertMenu?.component;
     const emptyLabel = messages.insertMenu.empty;
 
     // 打开菜单
     const openMenu = useCallback(
         (rect: DOMRect | null) => {
-            if (!enabled) return;
+            if (!enabled) {
+                return;
+            }
+
             setTriggerRect(rect);
             setVisible(true);
             lockDragHandle(editor, true);
@@ -289,12 +296,24 @@ export const InsertMenuProvider: React.FC<InsertMenuProviderProps> = ({ children
             items,
             positionConfig,
             zIndex,
+            component,
             emptyLabel,
             enabled,
             openMenu,
             closeMenu,
         }),
-        [visible, triggerRect, items, positionConfig, zIndex, emptyLabel, enabled, openMenu, closeMenu]
+        [
+            visible,
+            triggerRect,
+            items,
+            positionConfig,
+            zIndex,
+            component,
+            emptyLabel,
+            enabled,
+            openMenu,
+            closeMenu,
+        ]
     );
 
     return <InsertMenuContext.Provider value={value}>{children}</InsertMenuContext.Provider>;
